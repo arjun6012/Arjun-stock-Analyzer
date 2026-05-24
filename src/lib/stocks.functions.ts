@@ -256,39 +256,155 @@ function rsi(values: number[], period = 14): number {
   return 100 - 100 / (1 + rs);
 }
 
-function deriveSignal(price: number, sma20Val: number, sma50Val: number, rsiVal: number): { signal: Signal; reason: string } {
-  // Score-based composite
+function emaSeries(values: number[], period: number): number[] {
+  if (values.length === 0) return [];
+  const k = 2 / (period + 1);
+  const out: number[] = [];
+  // seed with SMA of first `period` (or first value if too short)
+  const seedCount = Math.min(period, values.length);
+  let seed = 0;
+  for (let i = 0; i < seedCount; i++) seed += values[i];
+  seed /= seedCount;
+  out.push(seed);
+  for (let i = 1; i < values.length; i++) {
+    const prev = out[out.length - 1];
+    out.push(values[i] * k + prev * (1 - k));
+  }
+  return out;
+}
+
+function ema(values: number[], period: number): number {
+  const series = emaSeries(values, period);
+  return series.length ? series[series.length - 1] : 0;
+}
+
+function stddev(values: number[]): number {
+  if (values.length < 2) return 0;
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const variance = values.reduce((a, b) => a + (b - mean) * (b - mean), 0) / values.length;
+  return Math.sqrt(variance);
+}
+
+interface Indicators {
+  sma20: number;
+  sma50: number;
+  sma200: number;
+  ema12: number;
+  ema26: number;
+  macd: number;
+  macdSignal: number;
+  macdHist: number;
+  rsi: number;
+  bbUpper: number;
+  bbLower: number;
+  bbMid: number;
+  bbPct: number;
+  week52High: number;
+  week52Low: number;
+  pctFrom52High: number;
+  pctFrom52Low: number;
+  momentum1m: number;
+  momentum3m: number;
+  avgVolume20: number;
+  volumeRatio: number;
+}
+
+function deriveSignal(price: number, ind: Indicators): { signal: Signal; reasons: string[]; score: number; confidence: number } {
   let score = 0;
   const reasons: string[] = [];
 
-  if (price > sma20Val && sma20Val > sma50Val) {
+  // Trend: price vs SMA200 (long-term)
+  if (ind.sma200 && price > ind.sma200) {
     score += 1;
-    reasons.push("uptrend (SMA20>SMA50)");
-  } else if (price < sma20Val && sma20Val < sma50Val) {
+    reasons.push("Above 200-day MA (long uptrend)");
+  } else if (ind.sma200 && price < ind.sma200) {
     score -= 1;
-    reasons.push("downtrend (SMA20<SMA50)");
+    reasons.push("Below 200-day MA (long downtrend)");
   }
 
-  if (rsiVal < 30) {
+  // Short/Mid trend: SMA20 vs SMA50
+  if (ind.sma20 > ind.sma50) {
+    score += 1;
+    reasons.push("SMA20 > SMA50 (bullish cross)");
+  } else if (ind.sma20 < ind.sma50) {
+    score -= 1;
+    reasons.push("SMA20 < SMA50 (bearish cross)");
+  }
+
+  // MACD histogram momentum
+  if (ind.macdHist > 0) {
+    score += 1;
+    reasons.push(`MACD positive (${ind.macdHist.toFixed(2)})`);
+  } else if (ind.macdHist < 0) {
+    score -= 1;
+    reasons.push(`MACD negative (${ind.macdHist.toFixed(2)})`);
+  }
+
+  // RSI extremes
+  if (ind.rsi < 30) {
     score += 2;
-    reasons.push(`oversold RSI ${rsiVal.toFixed(0)}`);
-  } else if (rsiVal > 70) {
+    reasons.push(`Oversold RSI ${ind.rsi.toFixed(0)}`);
+  } else if (ind.rsi > 70) {
     score -= 2;
-    reasons.push(`overbought RSI ${rsiVal.toFixed(0)}`);
+    reasons.push(`Overbought RSI ${ind.rsi.toFixed(0)}`);
+  } else if (ind.rsi >= 50 && ind.rsi <= 65) {
+    score += 0.5;
+    reasons.push(`Healthy RSI ${ind.rsi.toFixed(0)}`);
   } else {
-    reasons.push(`neutral RSI ${rsiVal.toFixed(0)}`);
+    reasons.push(`Neutral RSI ${ind.rsi.toFixed(0)}`);
+  }
+
+  // Bollinger position
+  if (ind.bbPct <= 0.1) {
+    score += 1;
+    reasons.push("Near lower Bollinger band");
+  } else if (ind.bbPct >= 0.9) {
+    score -= 1;
+    reasons.push("Near upper Bollinger band");
+  }
+
+  // 52-week position
+  if (ind.pctFrom52Low < 15 && ind.pctFrom52Low > 0) {
+    score += 1;
+    reasons.push(`Only ${ind.pctFrom52Low.toFixed(1)}% above 52w low`);
+  }
+  if (ind.pctFrom52High > -5 && ind.pctFrom52High <= 0) {
+    score -= 1;
+    reasons.push(`Within ${Math.abs(ind.pctFrom52High).toFixed(1)}% of 52w high`);
+  }
+
+  // Momentum
+  if (ind.momentum1m > 8) {
+    score += 0.5;
+    reasons.push(`1m momentum +${ind.momentum1m.toFixed(1)}%`);
+  } else if (ind.momentum1m < -8) {
+    score -= 0.5;
+    reasons.push(`1m momentum ${ind.momentum1m.toFixed(1)}%`);
+  }
+
+  // Volume surge with positive momentum = stronger buy
+  if (ind.volumeRatio > 1.3 && ind.momentum1m > 0) {
+    score += 0.5;
+    reasons.push(`Volume surge ${ind.volumeRatio.toFixed(2)}x`);
+  } else if (ind.volumeRatio > 1.3 && ind.momentum1m < 0) {
+    score -= 0.5;
+    reasons.push(`Heavy selling volume ${ind.volumeRatio.toFixed(2)}x`);
   }
 
   let signal: Signal = "HOLD";
-  if (score >= 2) signal = "BUY";
-  else if (score <= -2) signal = "SELL";
+  if (score >= 2.5) signal = "BUY";
+  else if (score <= -2.5) signal = "SELL";
 
-  return { signal, reason: reasons.join(" · ") };
+  // Confidence: |score| scaled to 0-100, max meaningful ~6
+  const confidence = Math.max(20, Math.min(100, Math.round((Math.abs(score) / 6) * 100)));
+
+  return { signal, reasons, score, confidence };
 }
 
 async function fetchOne(symbol: string, name: string, sector: string): Promise<StockQuote | null> {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=3mo`;
+    // 1-year daily data — needed for SMA200 and 52-week H/L
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1y`;
     const res = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; LovableStocks/1.0)",
@@ -300,17 +416,81 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const result = json?.chart?.result?.[0];
     if (!result) return null;
     const meta = result.meta;
-    const closes: number[] = (result.indicators?.quote?.[0]?.close ?? []).filter(
-      (v: number | null): v is number => typeof v === "number" && !Number.isNaN(v),
-    );
+    const rawCloses: (number | null)[] = result.indicators?.quote?.[0]?.close ?? [];
+    const rawHighs: (number | null)[] = result.indicators?.quote?.[0]?.high ?? [];
+    const rawLows: (number | null)[] = result.indicators?.quote?.[0]?.low ?? [];
+    const rawVols: (number | null)[] = result.indicators?.quote?.[0]?.volume ?? [];
+
+    const closes: number[] = rawCloses.filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
+    const highs: number[] = rawHighs.filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
+    const lows: number[] = rawLows.filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
+    const volumes: number[] = rawVols.filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
+
+    if (closes.length < 20) return null;
+
     const price = meta.regularMarketPrice ?? closes[closes.length - 1] ?? 0;
     const prev = meta.chartPreviousClose ?? meta.previousClose ?? closes[closes.length - 2] ?? price;
     const change = price - prev;
     const changePct = prev ? (change / prev) * 100 : 0;
+
     const sma20Val = sma(closes, 20);
     const sma50Val = sma(closes, 50);
+    const sma200Val = sma(closes, 200);
+    const ema12Val = ema(closes, 12);
+    const ema26Val = ema(closes, 26);
+
+    // MACD line series and signal
+    const ema12Series = emaSeries(closes, 12);
+    const ema26Series = emaSeries(closes, 26);
+    const macdLineSeries: number[] = [];
+    const len = Math.min(ema12Series.length, ema26Series.length);
+    for (let i = 0; i < len; i++) macdLineSeries.push(ema12Series[i] - ema26Series[i]);
+    const macdSignalVal = ema(macdLineSeries, 9);
+    const macdVal = macdLineSeries[macdLineSeries.length - 1] ?? 0;
+    const macdHist = macdVal - macdSignalVal;
+
     const rsiVal = rsi(closes, 14);
-    const { signal, reason } = deriveSignal(price, sma20Val, sma50Val, rsiVal);
+
+    // Bollinger Bands (20, 2)
+    const last20 = closes.slice(-20);
+    const bbMid = sma20Val;
+    const sd = stddev(last20);
+    const bbUpper = bbMid + 2 * sd;
+    const bbLower = bbMid - 2 * sd;
+    const bbRange = bbUpper - bbLower;
+    const bbPct = bbRange > 0 ? Math.max(0, Math.min(1, (price - bbLower) / bbRange)) : 0.5;
+
+    // 52-week High/Low — use the year range we already fetched
+    const week52High = Math.max(...highs, price);
+    const week52Low = Math.min(...lows, price);
+    const pctFrom52High = ((price - week52High) / week52High) * 100;
+    const pctFrom52Low = ((price - week52Low) / week52Low) * 100;
+
+    // Momentum
+    const ago21 = closes[closes.length - 22] ?? closes[0];
+    const ago63 = closes[closes.length - 64] ?? closes[0];
+    const momentum1m = ago21 ? ((price - ago21) / ago21) * 100 : 0;
+    const momentum3m = ago63 ? ((price - ago63) / ago63) * 100 : 0;
+
+    // Volume trend
+    const recent5 = volumes.slice(-5);
+    const recent20 = volumes.slice(-20);
+    const avgVol5 = recent5.length ? recent5.reduce((a, b) => a + b, 0) / recent5.length : 0;
+    const avgVolume20 = recent20.length ? recent20.reduce((a, b) => a + b, 0) / recent20.length : 0;
+    const volumeRatio = avgVolume20 ? avgVol5 / avgVolume20 : 1;
+
+    const indicators: Indicators = {
+      sma20: sma20Val, sma50: sma50Val, sma200: sma200Val,
+      ema12: ema12Val, ema26: ema26Val,
+      macd: macdVal, macdSignal: macdSignalVal, macdHist,
+      rsi: rsiVal,
+      bbUpper, bbLower, bbMid, bbPct,
+      week52High, week52Low, pctFrom52High, pctFrom52Low,
+      momentum1m, momentum3m,
+      avgVolume20, volumeRatio,
+    };
+
+    const { signal, reasons, score, confidence } = deriveSignal(price, indicators);
 
     return {
       symbol,
@@ -321,13 +501,14 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       change,
       changePercent: changePct,
       currency: meta.currency ?? "INR",
-      sma20: sma20Val,
-      sma50: sma50Val,
-      rsi: rsiVal,
+      ...indicators,
       signal,
-      reason,
-      suggestedBuyPrice: Math.min(price, sma20Val) * 0.98,
-      suggestedSellPrice: Math.max(price, sma20Val) * 1.05,
+      confidence,
+      score,
+      reasons,
+      reason: reasons.join(" · "),
+      suggestedBuyPrice: Math.min(price, sma20Val, bbLower * 1.01) * 0.99,
+      suggestedSellPrice: Math.max(price, sma20Val, bbUpper * 0.99) * 1.03,
       updatedAt: Date.now(),
     };
   } catch (e) {
