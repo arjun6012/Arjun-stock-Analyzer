@@ -293,18 +293,19 @@ function StockRow({
           </div>
         </div>
       </button>
-      {expanded && <NewsPanel symbol={q.symbol} />}
+      {expanded && <NewsPanel symbol={q.symbol} name={q.name} />}
     </li>
   );
 }
 
-function NewsPanel({ symbol }: { symbol: string }) {
+function NewsPanel({ symbol, name }: { symbol: string; name: string }) {
   const fetchNews = useServerFn(getStockNews);
   const { data, isLoading, error } = useQuery({
     queryKey: ["news", symbol],
-    queryFn: () => fetchNews({ data: { symbol } }),
+    queryFn: () => fetchNews({ data: { symbol, name } }),
     staleTime: 5 * 60_000,
   });
+
 
   return (
     <div className="border-t border-border bg-background/40 px-5 py-4">
