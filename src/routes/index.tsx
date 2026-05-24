@@ -12,11 +12,11 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dalal Signal — Indian Stocks Buy/Sell/Hold + Live News" },
+      { title: "Arjun Signal — Indian Stocks Buy/Sell/Hold + Live News" },
       {
         name: "description",
         content:
-          "Live NSE stock prices with technical buy/sell/hold signals from SMA & RSI, plus the latest news headlines for every stock.",
+          "Live NSE stock prices across every Indian sector with technical buy/sell/hold signals from SMA & RSI, plus the latest news headlines for every stock.",
       },
     ],
   }),
@@ -109,13 +109,13 @@ function Index() {
         <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Dalal Signal · NSE India · Nifty 50+
+              Arjun Signal · NSE India · All Sectors
             </div>
             <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
-              Buy. Sell. Hold.
+              Aim. Act. Profit.
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Live prices for {quotes.length || "50+"} Indian equities with technical signals (SMA-20/50 & RSI-14) and the latest news for every stock. Tap a row to see headlines. Educational prototype — not investment advice.
+              Live prices for {quotes.length || "150+"} Indian equities across every sector with technical signals (SMA-20/50 & RSI-14) and the latest news for every stock. Tap a row to see headlines, or tap a stat card to filter. Educational prototype — not investment advice.
             </p>
           </div>
           <button
@@ -128,10 +128,10 @@ function Index() {
         </header>
 
         <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Tracked" value={quotes.length} />
-          <StatCard label="Buy signals" value={counts.BUY} tone="buy" />
-          <StatCard label="Sell signals" value={counts.SELL} tone="sell" />
-          <StatCard label="Hold" value={counts.HOLD} tone="hold" />
+          <StatCard label="Tracked" value={quotes.length} active={filter === "ALL"} onClick={() => setFilter("ALL")} />
+          <StatCard label="Buy signals" value={counts.BUY} tone="buy" active={filter === "BUY"} onClick={() => setFilter("BUY")} />
+          <StatCard label="Sell signals" value={counts.SELL} tone="sell" active={filter === "SELL"} onClick={() => setFilter("SELL")} />
+          <StatCard label="Hold" value={counts.HOLD} tone="hold" active={filter === "HOLD"} onClick={() => setFilter("HOLD")} />
         </section>
 
         <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -219,7 +219,19 @@ function Index() {
   );
 }
 
-function StatCard({ label, value, tone }: { label: string; value: number; tone?: "buy" | "sell" | "hold" }) {
+function StatCard({
+  label,
+  value,
+  tone,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  tone?: "buy" | "sell" | "hold";
+  active?: boolean;
+  onClick?: () => void;
+}) {
   const toneColor =
     tone === "buy"
       ? "text-[oklch(0.78_0.18_150)]"
@@ -228,11 +240,25 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
         : tone === "hold"
           ? "text-[oklch(0.82_0.16_85)]"
           : "text-foreground";
+  const ringColor =
+    tone === "buy"
+      ? "ring-[oklch(0.72_0.18_150)]/60"
+      : tone === "sell"
+        ? "ring-[oklch(0.65_0.22_25)]/60"
+        : tone === "hold"
+          ? "ring-[oklch(0.75_0.16_85)]/60"
+          : "ring-primary/60";
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg border border-border bg-card p-4 text-left transition hover:bg-accent/30 ${
+        active ? `ring-2 ${ringColor}` : ""
+      }`}
+    >
       <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className={`mt-1 text-2xl font-bold ${toneColor}`}>{value}</div>
-    </div>
+    </button>
   );
 }
 
