@@ -20,8 +20,29 @@ export interface StockQuote {
   currency: string;
   sma20: number;
   sma50: number;
+  sma200: number;
+  ema12: number;
+  ema26: number;
+  macd: number;
+  macdSignal: number;
+  macdHist: number;
   rsi: number;
+  bbUpper: number;
+  bbLower: number;
+  bbMid: number;
+  bbPct: number; // 0..1 position within bands
+  week52High: number;
+  week52Low: number;
+  pctFrom52High: number; // negative = below high
+  pctFrom52Low: number;
+  momentum1m: number; // % over ~21 trading days
+  momentum3m: number; // % over ~63 trading days
+  avgVolume20: number;
+  volumeRatio: number; // recent 5d avg / 20d avg
   signal: Signal;
+  confidence: number; // 0..100
+  score: number;
+  reasons: string[];
   reason: string;
   suggestedSellPrice: number;
   suggestedBuyPrice: number;
