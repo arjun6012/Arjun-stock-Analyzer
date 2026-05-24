@@ -205,29 +205,73 @@ export const getIndianStocks = createServerFn({ method: "GET" }).handler(async (
   return { quotes, fetchedAt: Date.now() };
 });
 
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+    .replace(/<[^>]+>/g, "")
+    .trim();
+}
+
 export const getStockNews = createServerFn({ method: "GET" })
-  .inputValidator((data: { symbol: string }) => data)
+  .inputValidator((data: { symbol: string; name: string }) => data)
   .handler(async ({ data }): Promise<{ news: NewsItem[] }> => {
     try {
-      const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(data.symbol)}&newsCount=8&quotesCount=0`;
+      // Strip parenthetical aliases, e.g. "Zomato (Eternal)" -> "Zomato"
+      const cleanName = data.name.replace(/\s*\(.*?\)\s*/g, "").trim();
+      // Use the company name + share/stock + India to keep results on-topic.
+      const query = `"${cleanName}" (share OR stock OR shares OR NSE OR BSE)`;
+      const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-IN&gl=IN&ceid=IN:en`;
       const res = await fetch(url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (compatible; LovableStocks/1.0)",
-          Accept: "application/json",
+          Accept: "application/rss+xml, application/xml, text/xml",
         },
       });
       if (!res.ok) return { news: [] };
-      const json: any = await res.json();
-      const news: NewsItem[] = (json?.news ?? []).map((n: any) => ({
-        title: n.title ?? "",
-        link: n.link ?? "",
-        publisher: n.publisher ?? "Unknown",
-        publishedAt: (n.providerPublishTime ?? 0) * 1000,
-      })).filter((n: NewsItem) => n.title && n.link);
+      const xml = await res.text();
+      const items = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
+      const lowerName = cleanName.toLowerCase();
+      const nameTokens = lowerName.split(/\s+/).filter((t) => t.length > 2);
+
+      const news: NewsItem[] = items
+        .map((block) => {
+          const pick = (tag: string) => {
+            const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`));
+            if (!m) return "";
+            return decodeEntities(m[1].replace(/<!\[CDATA\[|\]\]>/g, ""));
+          };
+          const title = pick("title");
+          const link = pick("link");
+          const pubDate = pick("pubDate");
+          const source = pick("source") || "Google News";
+          return {
+            title,
+            link,
+            publisher: source,
+            publishedAt: pubDate ? new Date(pubDate).getTime() : 0,
+          };
+        })
+        .filter((n) => {
+          if (!n.title || !n.link) return false;
+          const t = n.title.toLowerCase();
+          // Require the company name (or one of its meaningful tokens) to appear
+          // in the title — drops unrelated market-wide headlines.
+          if (t.includes(lowerName)) return true;
+          return nameTokens.some((tok) => t.includes(tok));
+        })
+        .slice(0, 10);
+
       return { news };
     } catch (e) {
       console.error("getStockNews failed", data.symbol, e);
       return { news: [] };
     }
   });
+
 
