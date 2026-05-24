@@ -318,31 +318,50 @@ function StockRow({
   q,
   expanded,
   onToggle,
+  watched,
+  onToggleWatch,
 }: {
   q: StockQuote;
   expanded: boolean;
   onToggle: () => void;
+  watched: boolean;
+  onToggleWatch: () => void;
 }) {
   const up = q.change >= 0;
   return (
     <li>
-      <button
-        onClick={onToggle}
-        className="grid w-full grid-cols-12 items-center gap-4 px-5 py-4 text-left transition hover:bg-accent/30"
-      >
-        <div className="col-span-12 md:col-span-3">
-          <div className="font-semibold">{q.name}</div>
-          <div className="text-xs text-muted-foreground">
-            {q.symbol.replace(".NS", "")} · {q.sector}
-          </div>
+      <div className="grid w-full grid-cols-12 items-center gap-4 px-5 py-4 transition hover:bg-accent/30">
+        <div className="col-span-12 md:col-span-3 flex items-start gap-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleWatch();
+            }}
+            aria-label={watched ? "Remove from watchlist" : "Add to watchlist"}
+            className={`mt-0.5 text-lg transition ${
+              watched
+                ? "text-[oklch(0.82_0.16_85)]"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {watched ? "★" : "☆"}
+          </button>
+          <button onClick={onToggle} className="text-left">
+            <div className="font-semibold">{q.name}</div>
+            <div className="text-xs text-muted-foreground">
+              {q.symbol.replace(".NS", "")} · {q.sector}
+            </div>
+          </button>
         </div>
-        <div className="col-span-4 text-right md:col-span-2">
+        <button onClick={onToggle} className="col-span-4 text-right md:col-span-2">
           <div className="font-mono text-base font-semibold">{formatINR(q.price)}</div>
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
             prev {formatINR(q.previousClose)}
           </div>
-        </div>
-        <div
+        </button>
+        <button
+          onClick={onToggle}
           className={`col-span-4 text-right md:col-span-2 font-mono text-sm font-semibold ${
             up ? "text-[oklch(0.78_0.18_150)]" : "text-[oklch(0.75_0.22_25)]"
           }`}
@@ -352,27 +371,90 @@ function StockRow({
             {up ? "+" : ""}
             {q.changePercent.toFixed(2)}%
           </div>
-        </div>
-        <div className="col-span-4 text-right md:col-span-2">
+        </button>
+        <button onClick={onToggle} className="col-span-4 text-right md:col-span-2">
           <div className="font-mono text-xs text-[oklch(0.78_0.18_150)]">
             B {formatINR(q.suggestedBuyPrice)}
           </div>
           <div className="font-mono text-xs text-[oklch(0.75_0.22_25)]">
             S {formatINR(q.suggestedSellPrice)}
           </div>
-        </div>
-        <div className="col-span-6 text-right md:col-span-1 font-mono text-sm">
+        </button>
+        <button onClick={onToggle} className="col-span-6 text-right md:col-span-1 font-mono text-sm">
           {q.rsi.toFixed(0)}
-        </div>
-        <div className="col-span-6 md:col-span-2 flex flex-col items-end gap-1">
+        </button>
+        <button onClick={onToggle} className="col-span-6 md:col-span-2 flex flex-col items-end gap-1">
           <SignalPill signal={q.signal} />
-          <div className="text-[10px] text-muted-foreground line-clamp-2 text-right">
-            {q.reason}
+          <div className="text-[10px] text-muted-foreground">
+            {q.confidence}% confidence
           </div>
-        </div>
-      </button>
-      {expanded && <NewsPanel symbol={q.symbol} name={q.name} />}
+        </button>
+      </div>
+      {expanded && (
+        <>
+          <IndicatorPanel q={q} />
+          <NewsPanel symbol={q.symbol} name={q.name} />
+        </>
+      )}
     </li>
+  );
+}
+
+function IndicatorPanel({ q }: { q: StockQuote }) {
+  const items: { label: string; value: string; tone?: "buy" | "sell" | "neutral" }[] = [
+    { label: "SMA 20", value: formatINR(q.sma20), tone: q.price > q.sma20 ? "buy" : "sell" },
+    { label: "SMA 50", value: formatINR(q.sma50), tone: q.price > q.sma50 ? "buy" : "sell" },
+    { label: "SMA 200", value: formatINR(q.sma200), tone: q.price > q.sma200 ? "buy" : "sell" },
+    { label: "MACD hist", value: q.macdHist.toFixed(2), tone: q.macdHist > 0 ? "buy" : "sell" },
+    { label: "RSI 14", value: q.rsi.toFixed(1), tone: q.rsi < 30 ? "buy" : q.rsi > 70 ? "sell" : "neutral" },
+    { label: "Bollinger %", value: `${(q.bbPct * 100).toFixed(0)}%`, tone: q.bbPct < 0.2 ? "buy" : q.bbPct > 0.8 ? "sell" : "neutral" },
+    { label: "52w High", value: formatINR(q.week52High), tone: "neutral" },
+    { label: "52w Low", value: formatINR(q.week52Low), tone: "neutral" },
+    { label: "From 52w High", value: `${q.pctFrom52High.toFixed(1)}%`, tone: q.pctFrom52High > -5 ? "sell" : "neutral" },
+    { label: "From 52w Low", value: `+${q.pctFrom52Low.toFixed(1)}%`, tone: q.pctFrom52Low < 15 ? "buy" : "neutral" },
+    { label: "1m momentum", value: `${q.momentum1m >= 0 ? "+" : ""}${q.momentum1m.toFixed(1)}%`, tone: q.momentum1m > 0 ? "buy" : "sell" },
+    { label: "3m momentum", value: `${q.momentum3m >= 0 ? "+" : ""}${q.momentum3m.toFixed(1)}%`, tone: q.momentum3m > 0 ? "buy" : "sell" },
+    { label: "Volume vs 20d", value: `${q.volumeRatio.toFixed(2)}x`, tone: q.volumeRatio > 1.3 ? "buy" : "neutral" },
+    { label: "Composite score", value: q.score.toFixed(2), tone: q.score > 0 ? "buy" : q.score < 0 ? "sell" : "neutral" },
+  ];
+
+  return (
+    <div className="border-t border-border bg-background/40 px-5 py-4">
+      <div className="mb-3 flex items-baseline justify-between">
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Why this signal · {q.confidence}% confidence
+        </div>
+        <div className="text-[10px] text-muted-foreground">8-factor composite</div>
+      </div>
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+        {items.map((it) => (
+          <div key={it.label} className="rounded-md border border-border bg-card/60 px-2.5 py-2">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{it.label}</div>
+            <div
+              className={`mt-0.5 font-mono text-sm font-semibold ${
+                it.tone === "buy"
+                  ? "text-[oklch(0.78_0.18_150)]"
+                  : it.tone === "sell"
+                    ? "text-[oklch(0.75_0.22_25)]"
+                    : "text-foreground"
+              }`}
+            >
+              {it.value}
+            </div>
+          </div>
+        ))}
+      </div>
+      {q.reasons.length > 0 && (
+        <ul className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
+          {q.reasons.map((r, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="text-foreground/40">·</span>
+              <span>{r}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
