@@ -69,6 +69,10 @@ export interface StockQuote {
   stopLoss: number;
   confluenceReasons: string[];
   confidenceTier: "HIGH" | "MEDIUM" | "LOW";
+  ema9: number;
+  ema21: number;
+  ema55: number;
+  bbWidth: number;
 }
 
 const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
@@ -490,6 +494,10 @@ interface Indicators {
   pivotS2: number;
   pivotR1: number;
   pivotR2: number;
+  ema9: number;
+  ema21: number;
+  ema55: number;
+  bbWidth: number;
 }
 
 function deriveSignal(
@@ -510,17 +518,16 @@ function deriveSignal(
   const isTrendStrong = ind.adxTrend === "STRONG";
   const isTrendWeak = ind.adxTrend === "WEAK";
 
+  // Base Indicators calculations:
   // 1. Long-term Trend: price vs SMA200
   if (ind.sma200 && price > ind.sma200) {
     const wt = isTrendStrong ? 1.5 : 1.0;
     score += wt;
     reasons.push("Above 200-day MA (long uptrend)");
-    confluenceReasons.push(`Bullish long-term trend (Price > SMA200)`);
   } else if (ind.sma200 && price < ind.sma200) {
     const wt = isTrendStrong ? 1.5 : 1.0;
     score -= wt;
     reasons.push("Below 200-day MA (long downtrend)");
-    confluenceReasons.push(`Bearish long-term trend (Price < SMA200)`);
   }
 
   // 2. Short/Mid trend: SMA20 vs SMA50
@@ -528,12 +535,10 @@ function deriveSignal(
     const wt = isTrendStrong ? 1.5 : 1.0;
     score += wt;
     reasons.push("SMA20 > SMA50 (bullish cross)");
-    confluenceReasons.push("SMA Golden crossover (SMA20 > SMA50)");
   } else if (ind.sma20 < ind.sma50) {
     const wt = isTrendStrong ? 1.5 : 1.0;
     score -= wt;
     reasons.push("SMA20 < SMA50 (bearish cross)");
-    confluenceReasons.push("SMA Death crossover (SMA20 < SMA50)");
   }
 
   // 3. MACD histogram momentum
@@ -549,11 +554,9 @@ function deriveSignal(
   if (ind.macdCross === "BULLISH") {
     score += 1.5;
     reasons.push("Bullish MACD crossover");
-    confluenceReasons.push("Bullish MACD Line crossover");
   } else if (ind.macdCross === "BEARISH") {
     score -= 1.5;
     reasons.push("Bearish MACD crossover");
-    confluenceReasons.push("Bearish MACD Line crossover");
   }
 
   // 5. RSI extremes
@@ -561,11 +564,9 @@ function deriveSignal(
   if (ind.rsi < 30) {
     score += rsiWeight;
     reasons.push(`Oversold RSI ${ind.rsi.toFixed(0)}`);
-    confluenceReasons.push(`Oversold RSI condition (<30)`);
   } else if (ind.rsi > 70) {
     score -= rsiWeight;
     reasons.push(`Overbought RSI ${ind.rsi.toFixed(0)}`);
-    confluenceReasons.push(`Overbought RSI condition (>70)`);
   } else if (ind.rsi >= 50 && ind.rsi <= 65) {
     score += 0.5;
     reasons.push(`Healthy RSI ${ind.rsi.toFixed(0)}`);
@@ -577,11 +578,9 @@ function deriveSignal(
   if (ind.mfi < 20) {
     score += 1.5;
     reasons.push(`Oversold MFI ${ind.mfi.toFixed(0)}`);
-    confluenceReasons.push("Oversold volume-weighted Money Flow Index (<20)");
   } else if (ind.mfi > 80) {
     score -= 1.5;
     reasons.push(`Overbought MFI ${ind.mfi.toFixed(0)}`);
-    confluenceReasons.push("Overbought volume-weighted Money Flow Index (>80)");
   }
 
   // 7. Bollinger position
@@ -589,11 +588,9 @@ function deriveSignal(
   if (ind.bbPct <= 0.1) {
     score += bbWeight;
     reasons.push("Near lower Bollinger band");
-    confluenceReasons.push("Price near lower Bollinger Band");
   } else if (ind.bbPct >= 0.9) {
     score -= bbWeight;
     reasons.push("Near upper Bollinger band");
-    confluenceReasons.push("Price near upper Bollinger Band");
   }
 
   // 8. Fibonacci Retracement Support/Resistance
@@ -603,7 +600,6 @@ function deriveSignal(
     if (price >= ind.fib618) {
       score += 1.0;
       reasons.push("Holding 61.8% Fibonacci support");
-      confluenceReasons.push("Price holding 61.8% Golden Ratio Fibonacci support");
     } else {
       score -= 0.5;
       reasons.push("Broke 61.8% Fibonacci support");
@@ -612,7 +608,6 @@ function deriveSignal(
     if (price >= ind.fib500) {
       score += 0.8;
       reasons.push("Holding 50% Fibonacci support");
-      confluenceReasons.push("Price holding 50% Fibonacci retracement support");
     } else {
       score -= 0.4;
       reasons.push("Broke 50% Fibonacci support");
@@ -628,7 +623,6 @@ function deriveSignal(
   } else if (isNearS2 && price >= ind.pivotS2) {
     score += 1.0;
     reasons.push("Holding Pivot Support S2");
-    confluenceReasons.push("Price holding key Pivot Support S2");
   }
 
   // 10. 52-week position
@@ -654,14 +648,68 @@ function deriveSignal(
   if (ind.volumeRatio > 1.3 && ind.momentum1m > 0) {
     score += 1.0;
     reasons.push(`Volume surge ${ind.volumeRatio.toFixed(2)}x`);
-    confluenceReasons.push(
-      `Volume surge (${ind.volumeRatio.toFixed(2)}x) confirming buying pressure`,
-    );
   } else if (ind.volumeRatio > 1.3 && ind.momentum1m < 0) {
     score -= 1.0;
     reasons.push(`Heavy selling volume ${ind.volumeRatio.toFixed(2)}x`);
+  }
+
+  // ==================== PROVEN TRADING STRATEGIES ====================
+
+  // Strategy 1: Trend Pullback Strategy (Buy-the-Dip in long-term uptrend)
+  const isLongTermUptrend = ind.sma200 && price > ind.sma200;
+  const isShortTermPullback = ind.rsi < 45 || ind.mfi < 30 || price <= ind.sma20;
+  if (isLongTermUptrend && isShortTermPullback) {
+    score += 2.5;
+    reasons.push("Buy-the-Dip pullback in long-term uptrend");
+    confluenceReasons.push("Strategy: Trend Pullback (Price > SMA200 + Oversold pullback)");
+  }
+
+  // Strategy 2: High-Volume Momentum Breakout (EMA Ribbon Continuation)
+  const isEMABullishAlignment = ind.ema9 > ind.ema21 && ind.ema21 > ind.ema55;
+  const isVolumeSupported = ind.volumeRatio > 1.3;
+  if (isEMABullishAlignment && isVolumeSupported && price > ind.sma50) {
+    score += 2.0;
+    reasons.push("High-volume EMA ribbon momentum breakout");
+    confluenceReasons.push("Strategy: Volume Breakout (EMA 9/21/55 aligned + Volume Surge)");
+  }
+
+  // Strategy 3: Mean Reversion / Extreme Band Reversal
+  const isExtremeOversold = ind.rsi < 32 && ind.mfi < 25;
+  const isLowerBandTouch = ind.bbPct <= 0.08;
+  if (isExtremeOversold && isLowerBandTouch) {
+    score += 3.0;
+    reasons.push("Extreme oversold Bollinger Lower Band mean-reversion buy");
     confluenceReasons.push(
-      `Volume surge (${ind.volumeRatio.toFixed(2)}x) during price drop (distribution)`,
+      "Strategy: Extreme Mean Reversion (RSI/MFI oversold + Lower Band touch)",
+    );
+  }
+
+  // Strategy 4: Volatility Squeeze Breakout (John Carter Squeeze)
+  const isBBSqueeze = ind.bbWidth < 0.08;
+  if (isBBSqueeze) {
+    if (ind.macdCross === "BULLISH" || (ind.macdHist > 0 && ind.momentum1m > 2)) {
+      score += 2.0;
+      reasons.push("Bullish squeeze breakout");
+      confluenceReasons.push(
+        "Strategy: Volatility Squeeze Bullish Breakout (BB Width < 8% + MACD Bullish)",
+      );
+    } else if (ind.macdCross === "BEARISH" || (ind.macdHist < 0 && ind.momentum1m < -2)) {
+      score -= 2.0;
+      reasons.push("Bearish squeeze breakdown");
+      confluenceReasons.push(
+        "Strategy: Volatility Squeeze Bearish Breakdown (BB Width < 8% + MACD Bearish)",
+      );
+    }
+  }
+
+  // Strategy 5: Bearish Trend Retracement (Sell-the-Rip in downtrends)
+  const isLongTermDowntrend = ind.sma200 && price < ind.sma200;
+  const isShortTermOverboughtRip = ind.rsi > 58 || ind.mfi > 70 || price >= ind.sma20;
+  if (isLongTermDowntrend && isShortTermOverboughtRip) {
+    score -= 2.5;
+    reasons.push("Short-term overbought rip in long-term downtrend");
+    confluenceReasons.push(
+      "Strategy: Bearish Trend Retracement (Price < SMA200 + Overbought pullback)",
     );
   }
 
@@ -669,7 +717,8 @@ function deriveSignal(
   if (score >= 2.5) signal = "BUY";
   else if (score <= -2.5) signal = "SELL";
 
-  const confidence = Math.max(20, Math.min(100, Math.round((Math.abs(score) / 8) * 100)));
+  // Confidence scaled to a maximum expected strategy confluence score of ~10
+  const confidence = Math.max(20, Math.min(100, Math.round((Math.abs(score) / 10) * 100)));
 
   let confidenceTier: "HIGH" | "MEDIUM" | "LOW" = "LOW";
   if (confidence >= 75) confidenceTier = "HIGH";
@@ -722,6 +771,9 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const sma20Val = sma(closes, 20);
     const sma50Val = sma(closes, 50);
     const sma200Val = sma(closes, 200);
+    const ema9Val = ema(closes, 9);
+    const ema21Val = ema(closes, 21);
+    const ema55Val = ema(closes, 55);
     const ema12Val = ema(closes, 12);
     const ema26Val = ema(closes, 26);
 
@@ -743,6 +795,7 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const bbLower = bbMid - 2 * sd;
     const bbRange = bbUpper - bbLower;
     const bbPct = bbRange > 0 ? Math.max(0, Math.min(1, (price - bbLower) / bbRange)) : 0.5;
+    const bbWidth = bbMid > 0 ? bbRange / bbMid : 0.1;
 
     const week52High = Math.max(...highs, price);
     const week52Low = Math.min(...lows, price);
@@ -819,6 +872,10 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       pivotS2,
       pivotR1,
       pivotR2,
+      ema9: ema9Val,
+      ema21: ema21Val,
+      ema55: ema55Val,
+      bbWidth,
     };
 
     const { signal, reasons, score, confidence, confluenceReasons, confidenceTier } = deriveSignal(
