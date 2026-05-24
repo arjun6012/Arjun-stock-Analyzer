@@ -83,7 +83,9 @@ function useWatchlist() {
   };
 
   const toggle = (symbol: string) => {
-    persist(watchlist.includes(symbol) ? watchlist.filter((s) => s !== symbol) : [...watchlist, symbol]);
+    persist(
+      watchlist.includes(symbol) ? watchlist.filter((s) => s !== symbol) : [...watchlist, symbol],
+    );
   };
 
   return { watchlist, toggle, isWatched: (s: string) => watchlist.includes(s) };
@@ -150,7 +152,10 @@ function Index() {
               Aim. Act. Profit.
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Daily signals on {quotes.length || "150+"} Indian equities. Buy/Sell/Hold computed from 8 indicators — SMA 20/50/200, MACD, RSI-14, Bollinger Bands, 52-week range, momentum & volume trend. Tap a row for the full breakdown and news. Educational prototype — not investment advice.
+              Daily signals on {quotes.length || "150+"} Indian equities. Buy/Sell/Hold computed
+              from 8 indicators — SMA 20/50/200, MACD, RSI-14, Bollinger Bands, 52-week range,
+              momentum & volume trend. Tap a row for the full breakdown and news. Educational
+              prototype — not investment advice.
             </p>
           </div>
           <button
@@ -163,10 +168,45 @@ function Index() {
         </header>
 
         <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Tracked" value={quotes.length} active={view === "ALL" && filter === "ALL"} onClick={() => { setView("ALL"); setFilter("ALL"); }} />
-          <StatCard label="Buy signals" value={counts.BUY} tone="buy" active={filter === "BUY"} onClick={() => { setView("ALL"); setFilter("BUY"); }} />
-          <StatCard label="Sell signals" value={counts.SELL} tone="sell" active={filter === "SELL"} onClick={() => { setView("ALL"); setFilter("SELL"); }} />
-          <StatCard label="Hold" value={counts.HOLD} tone="hold" active={filter === "HOLD"} onClick={() => { setView("ALL"); setFilter("HOLD"); }} />
+          <StatCard
+            label="Tracked"
+            value={quotes.length}
+            active={view === "ALL" && filter === "ALL"}
+            onClick={() => {
+              setView("ALL");
+              setFilter("ALL");
+            }}
+          />
+          <StatCard
+            label="Buy signals"
+            value={counts.BUY}
+            tone="buy"
+            active={filter === "BUY"}
+            onClick={() => {
+              setView("ALL");
+              setFilter("BUY");
+            }}
+          />
+          <StatCard
+            label="Sell signals"
+            value={counts.SELL}
+            tone="sell"
+            active={filter === "SELL"}
+            onClick={() => {
+              setView("ALL");
+              setFilter("SELL");
+            }}
+          />
+          <StatCard
+            label="Hold"
+            value={counts.HOLD}
+            tone="hold"
+            active={filter === "HOLD"}
+            onClick={() => {
+              setView("ALL");
+              setFilter("HOLD");
+            }}
+          />
         </section>
 
         <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -176,7 +216,9 @@ function Index() {
                 key={v}
                 onClick={() => setView(v)}
                 className={`rounded px-3 py-1.5 text-xs font-semibold tracking-wider transition ${
-                  view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  view === v
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {v === "WATCHLIST" ? `★ Watchlist (${watchlist.length})` : "All stocks"}
@@ -189,7 +231,9 @@ function Index() {
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`rounded px-3 py-1.5 text-xs font-semibold tracking-wider transition ${
-                  filter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  filter === f
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {f}
@@ -253,7 +297,9 @@ function Index() {
               ))}
               {filtered.length === 0 && (
                 <li className="px-5 py-10 text-center text-sm text-muted-foreground">
-                  {view === "WATCHLIST" ? "Your watchlist is empty — tap the ★ on any stock to add it." : "No matches."}
+                  {view === "WATCHLIST"
+                    ? "Your watchlist is empty — tap the ★ on any stock to add it."
+                    : "No matches."}
                 </li>
               )}
             </ul>
@@ -263,7 +309,14 @@ function Index() {
         <footer className="mt-8 text-center text-xs text-muted-foreground">
           Quotes: Yahoo Finance (end-of-day). Signals computed daily from 8 technical indicators.
           {data?.fetchedAt && (
-            <> · Last update {new Date(data.fetchedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</>
+            <>
+              {" "}
+              · Last update{" "}
+              {new Date(data.fetchedAt).toLocaleString("en-IN", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </>
           )}
         </footer>
       </div>
@@ -340,9 +393,7 @@ function StockRow({
             }}
             aria-label={watched ? "Remove from watchlist" : "Add to watchlist"}
             className={`mt-0.5 text-lg transition ${
-              watched
-                ? "text-[oklch(0.82_0.16_85)]"
-                : "text-muted-foreground hover:text-foreground"
+              watched ? "text-[oklch(0.82_0.16_85)]" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {watched ? "★" : "☆"}
@@ -380,13 +431,28 @@ function StockRow({
             S {formatINR(q.suggestedSellPrice)}
           </div>
         </button>
-        <button onClick={onToggle} className="col-span-6 text-right md:col-span-1 font-mono text-sm">
+        <button
+          onClick={onToggle}
+          className="col-span-6 text-right md:col-span-1 font-mono text-sm"
+        >
           {q.rsi.toFixed(0)}
         </button>
-        <button onClick={onToggle} className="col-span-6 md:col-span-2 flex flex-col items-end gap-1">
-          <SignalPill signal={q.signal} />
-          <div className="text-[10px] text-muted-foreground">
-            {q.confidence}% confidence
+        <button
+          onClick={onToggle}
+          className="col-span-6 md:col-span-2 flex flex-col items-end gap-1"
+        >
+          <div className="flex items-center gap-1.5">
+            {q.confidenceTier === "HIGH" && (
+              <span
+                className="inline-block h-2 w-2 rounded-full bg-[oklch(0.78_0.18_150)] animate-pulse"
+                title="High Confidence Crossover"
+              />
+            )}
+            <SignalPill signal={q.signal} />
+          </div>
+          <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+            <span>{q.confidence}% confidence</span>
+            {q.confidenceTier === "HIGH" && <span className="text-[oklch(0.82_0.16_85)]">★</span>}
           </div>
         </button>
       </div>
@@ -401,59 +467,292 @@ function StockRow({
 }
 
 function IndicatorPanel({ q }: { q: StockQuote }) {
-  const items: { label: string; value: string; tone?: "buy" | "sell" | "neutral" }[] = [
-    { label: "SMA 20", value: formatINR(q.sma20), tone: q.price > q.sma20 ? "buy" : "sell" },
-    { label: "SMA 50", value: formatINR(q.sma50), tone: q.price > q.sma50 ? "buy" : "sell" },
-    { label: "SMA 200", value: formatINR(q.sma200), tone: q.price > q.sma200 ? "buy" : "sell" },
-    { label: "MACD hist", value: q.macdHist.toFixed(2), tone: q.macdHist > 0 ? "buy" : "sell" },
-    { label: "RSI 14", value: q.rsi.toFixed(1), tone: q.rsi < 30 ? "buy" : q.rsi > 70 ? "sell" : "neutral" },
-    { label: "Bollinger %", value: `${(q.bbPct * 100).toFixed(0)}%`, tone: q.bbPct < 0.2 ? "buy" : q.bbPct > 0.8 ? "sell" : "neutral" },
-    { label: "52w High", value: formatINR(q.week52High), tone: "neutral" },
-    { label: "52w Low", value: formatINR(q.week52Low), tone: "neutral" },
-    { label: "From 52w High", value: `${q.pctFrom52High.toFixed(1)}%`, tone: q.pctFrom52High > -5 ? "sell" : "neutral" },
-    { label: "From 52w Low", value: `+${q.pctFrom52Low.toFixed(1)}%`, tone: q.pctFrom52Low < 15 ? "buy" : "neutral" },
-    { label: "1m momentum", value: `${q.momentum1m >= 0 ? "+" : ""}${q.momentum1m.toFixed(1)}%`, tone: q.momentum1m > 0 ? "buy" : "sell" },
-    { label: "3m momentum", value: `${q.momentum3m >= 0 ? "+" : ""}${q.momentum3m.toFixed(1)}%`, tone: q.momentum3m > 0 ? "buy" : "sell" },
-    { label: "Volume vs 20d", value: `${q.volumeRatio.toFixed(2)}x`, tone: q.volumeRatio > 1.3 ? "buy" : "neutral" },
-    { label: "Composite score", value: q.score.toFixed(2), tone: q.score > 0 ? "buy" : q.score < 0 ? "sell" : "neutral" },
+  const indicatorsGrid = [
+    {
+      name: "SMA Trend",
+      value: q.price > q.sma200 ? "Bullish (Price > SMA200)" : "Bearish (Price < SMA200)",
+      status: q.price > q.sma200 ? "bullish" : "bearish",
+      details: `SMA200: ${formatINR(q.sma200)}`,
+    },
+    {
+      name: "MACD Cross",
+      value:
+        q.macdCross === "BULLISH"
+          ? "Bullish Crossover"
+          : q.macdCross === "BEARISH"
+            ? "Bearish Crossover"
+            : q.macdHist > 0
+              ? "Bullish Hist"
+              : "Bearish Hist",
+      status:
+        q.macdCross === "BULLISH" || (q.macdCross === "NONE" && q.macdHist > 0)
+          ? "bullish"
+          : "bearish",
+      details: `MACD Line vs Signal`,
+    },
+    {
+      name: "RSI (14)",
+      value: `${q.rsi.toFixed(1)} (${q.rsi < 30 ? "Oversold" : q.rsi > 70 ? "Overbought" : "Neutral"})`,
+      status: q.rsi < 40 ? "bullish" : q.rsi > 65 ? "bearish" : "neutral",
+      details: "Momentum oscillator",
+    },
+    {
+      name: "Money Flow (MFI)",
+      value: `${q.mfi.toFixed(1)} (${q.mfi < 20 ? "Oversold" : q.mfi > 80 ? "Overbought" : "Neutral"})`,
+      status: q.mfi < 30 ? "bullish" : q.mfi > 70 ? "bearish" : "neutral",
+      details: "Volume-weighted RSI",
+    },
+    {
+      name: "Trend Strength (ADX)",
+      value: `${q.adx.toFixed(1)} (${q.adxTrend})`,
+      status: q.adxTrend === "STRONG" ? "bullish" : "neutral",
+      details: "Average Directional Index",
+    },
+    {
+      name: "Bollinger Bands",
+      value: `${(q.bbPct * 100).toFixed(0)}% position`,
+      status: q.bbPct < 0.2 ? "bullish" : q.bbPct > 0.8 ? "bearish" : "neutral",
+      details: `Range: ${formatINR(q.bbLower)} - ${formatINR(q.bbUpper)}`,
+    },
+    {
+      name: "Volume Surge",
+      value: `${q.volumeRatio.toFixed(2)}x`,
+      status: q.volumeRatio > 1.3 ? "bullish" : "neutral",
+      details: "5d average vs 20d average",
+    },
   ];
 
+  const fibLevels = [
+    { label: "0.0% (52w High)", value: q.week52High },
+    { label: "23.6%", value: q.fib236 },
+    { label: "38.2%", value: q.fib382 },
+    { label: "50.0% (Halfway)", value: q.fib500 },
+    { label: "61.8% (Golden Support)", value: q.fib618 },
+    { label: "78.6%", value: q.fib786 },
+    { label: "100.0% (52w Low)", value: q.week52Low },
+  ];
+
+  const pivotLevels = [
+    { label: "Resistance R2", value: q.pivotR2, color: "text-[oklch(0.75_0.22_25)]" },
+    { label: "Resistance R1", value: q.pivotR1, color: "text-[oklch(0.75_0.22_25)]/80" },
+    { label: "Pivot PP", value: q.pivotPP, color: "text-muted-foreground" },
+    { label: "Support S1", value: q.pivotS1, color: "text-[oklch(0.78_0.18_150)]/80" },
+    { label: "Support S2", value: q.pivotS2, color: "text-[oklch(0.78_0.18_150)]" },
+  ];
+
+  const tierColors = {
+    HIGH: "bg-[oklch(0.72_0.18_150)]/15 text-[oklch(0.78_0.18_150)] border-[oklch(0.72_0.18_150)]/30",
+    MEDIUM:
+      "bg-[oklch(0.75_0.16_85)]/15 text-[oklch(0.82_0.16_85)] border-[oklch(0.75_0.16_85)]/30",
+    LOW: "bg-muted/40 text-muted-foreground border-border",
+  };
+
   return (
-    <div className="border-t border-border bg-background/40 px-5 py-4">
-      <div className="mb-3 flex items-baseline justify-between">
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Why this signal · {q.confidence}% confidence
+    <div className="border-t border-border bg-background/50 px-5 py-6">
+      {/* Top Banner: Confidence & Meta */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-4">
+        <div className="flex items-center gap-3">
+          <span
+            className={`rounded border px-2.5 py-0.5 text-xs font-bold tracking-wide uppercase ${tierColors[q.confidenceTier]}`}
+          >
+            {q.confidenceTier} CONFIDENCE
+          </span>
+          <span className="text-xs text-muted-foreground font-mono">
+            Score: {q.score > 0 ? `+${q.score.toFixed(2)}` : q.score.toFixed(2)}
+          </span>
         </div>
-        <div className="text-[10px] text-muted-foreground">8-factor composite</div>
+        <div className="text-xs text-muted-foreground">Calculated on 250+ days end-of-day data</div>
       </div>
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-        {items.map((it) => (
-          <div key={it.label} className="rounded-md border border-border bg-card/60 px-2.5 py-2">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{it.label}</div>
-            <div
-              className={`mt-0.5 font-mono text-sm font-semibold ${
-                it.tone === "buy"
-                  ? "text-[oklch(0.78_0.18_150)]"
-                  : it.tone === "sell"
-                    ? "text-[oklch(0.75_0.22_25)]"
-                    : "text-foreground"
-              }`}
-            >
-              {it.value}
+
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* Left Column: Trade Action Plan (glassmorphism dashboard card) */}
+        <div className="lg:col-span-5 flex flex-col gap-4">
+          <div className="rounded-xl border border-border/80 bg-gradient-to-br from-card/80 to-card/30 p-5 shadow-sm">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
+              🎯 Trade Action Plan & Levels
+            </h3>
+
+            <div className="grid gap-4">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <div className="text-[10px] uppercase font-semibold text-primary tracking-wide">
+                  Accumulation Zone (Buy Entry Range)
+                </div>
+                <div className="mt-1 font-mono text-lg font-bold text-foreground">
+                  {formatINR(q.accumulationZoneMin)} - {formatINR(q.accumulationZoneMax)}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  Suggested range for gradual buying
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-[oklch(0.72_0.18_150)]/20 bg-[oklch(0.72_0.18_150)]/5 p-3">
+                  <div className="text-[10px] uppercase font-semibold text-[oklch(0.78_0.18_150)] tracking-wide">
+                    Target 1 (R1)
+                  </div>
+                  <div className="mt-1 font-mono text-base font-bold text-[oklch(0.78_0.18_150)]">
+                    {formatINR(q.target1)}
+                  </div>
+                  <div className="text-[9px] text-muted-foreground mt-0.5">
+                    Est. Profit: +{(((q.target1 - q.price) / q.price) * 100).toFixed(1)}%
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-[oklch(0.72_0.18_150)]/20 bg-[oklch(0.72_0.18_150)]/5 p-3">
+                  <div className="text-[10px] uppercase font-semibold text-[oklch(0.78_0.18_150)] tracking-wide">
+                    Target 2 (R2)
+                  </div>
+                  <div className="mt-1 font-mono text-base font-bold text-[oklch(0.78_0.18_150)]">
+                    {formatINR(q.target2)}
+                  </div>
+                  <div className="text-[9px] text-muted-foreground mt-0.5">
+                    Est. Profit: +{(((q.target2 - q.price) / q.price) * 100).toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-[oklch(0.65_0.22_25)]/20 bg-[oklch(0.65_0.22_25)]/5 p-3">
+                <div className="text-[10px] uppercase font-semibold text-[oklch(0.75_0.22_25)] tracking-wide">
+                  Invalidation Trigger (Stop Loss)
+                </div>
+                <div className="mt-1 font-mono text-base font-bold text-[oklch(0.75_0.22_25)]">
+                  {formatINR(q.stopLoss)}
+                </div>
+                <div className="text-[9px] text-muted-foreground mt-0.5">
+                  Exit setup if price closes below. Risk:{" "}
+                  {(((q.price - q.stopLoss) / q.price) * 100).toFixed(1)}%
+                </div>
+              </div>
             </div>
           </div>
-        ))}
+
+          {/* Technical Alignment Log */}
+          <div className="rounded-xl border border-border/50 bg-card/40 p-5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+              📝 Confluence Insights
+            </h3>
+            <ul className="space-y-2 text-xs text-muted-foreground">
+              {q.confluenceReasons && q.confluenceReasons.length > 0
+                ? q.confluenceReasons.map((reason, i) => (
+                    <li key={i} className="flex gap-2 items-start">
+                      <span className="text-[oklch(0.78_0.18_150)] font-bold">✓</span>
+                      <span>{reason}</span>
+                    </li>
+                  ))
+                : null}
+              {q.reasons.map((r, i) => {
+                if (q.confluenceReasons?.some((cr) => cr.includes(r.split(" (")[0]))) return null;
+                return (
+                  <li key={`basic-${i}`} className="flex gap-2 items-start">
+                    <span className="text-muted-foreground font-semibold">·</span>
+                    <span>{r}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+
+        {/* Right Column: Indicators Grid & Pivot/Fib scales */}
+        <div className="lg:col-span-7 flex flex-col gap-6">
+          {/* Indicators grid */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+              📊 Multi-Indicator Crossover & Oscillation
+            </h3>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {indicatorsGrid.map((it) => (
+                <div
+                  key={it.name}
+                  className="flex items-center justify-between border border-border/50 bg-card/60 px-3.5 py-2.5 rounded-lg"
+                >
+                  <div>
+                    <div className="text-xs font-semibold text-foreground">{it.name}</div>
+                    <div className="text-[10px] text-muted-foreground">{it.details}</div>
+                  </div>
+                  <div className="text-right">
+                    <div
+                      className={`text-xs font-mono font-bold ${
+                        it.status === "bullish"
+                          ? "text-[oklch(0.78_0.18_150)]"
+                          : it.status === "bearish"
+                            ? "text-[oklch(0.75_0.22_25)]"
+                            : "text-foreground"
+                      }`}
+                    >
+                      {it.value}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pivot Points & Fibonacci Scales */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Standard Pivot Points */}
+            <div className="border border-border/50 bg-card/30 rounded-xl p-4">
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                🔑 Standard Pivot Support/Resistance
+              </h4>
+              <div className="space-y-1.5 font-mono text-xs">
+                {pivotLevels.map((lvl) => {
+                  const isPriceAbove = q.price >= lvl.value;
+                  return (
+                    <div
+                      key={lvl.label}
+                      className="flex justify-between items-center py-0.5 border-b border-border/10"
+                    >
+                      <span className={`${lvl.color} font-medium`}>{lvl.label}</span>
+                      <div className="flex items-center gap-1.5 font-mono">
+                        <span className="text-foreground font-bold">{formatINR(lvl.value)}</span>
+                        <span
+                          className={`text-[9px] px-1 rounded ${isPriceAbove ? "bg-[oklch(0.72_0.18_150)]/10 text-[oklch(0.78_0.18_150)]" : "bg-[oklch(0.65_0.22_25)]/10 text-[oklch(0.75_0.22_25)]"}`}
+                        >
+                          {lvl.label === "Pivot PP" ? "PP" : isPriceAbove ? "ABOVE" : "BELOW"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Fibonacci Retracements */}
+            <div className="border border-border/50 bg-card/30 rounded-xl p-4">
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                📏 52-Week Fibonacci Retracements
+              </h4>
+              <div className="space-y-1.5 font-mono text-xs">
+                {fibLevels.map((lvl) => {
+                  const isPriceAbove = q.price >= lvl.value;
+                  const isKeyGolden = lvl.label.includes("61.8%");
+                  return (
+                    <div
+                      key={lvl.label}
+                      className={`flex justify-between items-center py-0.5 border-b border-border/10 ${isKeyGolden ? "bg-[oklch(0.75_0.16_85)]/5 px-1 rounded border border-[oklch(0.75_0.16_85)]/25" : ""}`}
+                    >
+                      <span
+                        className={`${isKeyGolden ? "text-[oklch(0.82_0.16_85)] font-bold" : "text-muted-foreground"}`}
+                      >
+                        {lvl.label}
+                      </span>
+                      <div className="flex items-center gap-1.5 font-mono">
+                        <span className="text-foreground font-bold">{formatINR(lvl.value)}</span>
+                        <span
+                          className={`text-[9px] px-1 rounded ${isPriceAbove ? "bg-[oklch(0.72_0.18_150)]/10 text-[oklch(0.78_0.18_150)]" : "bg-[oklch(0.65_0.22_25)]/10 text-[oklch(0.75_0.22_25)]"}`}
+                        >
+                          {isPriceAbove ? "ABOVE" : "BELOW"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      {q.reasons.length > 0 && (
-        <ul className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
-          {q.reasons.map((r, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="text-foreground/40">·</span>
-              <span>{r}</span>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
@@ -465,7 +764,6 @@ function NewsPanel({ symbol, name }: { symbol: string; name: string }) {
     queryFn: () => fetchNews({ data: { symbol, name } }),
     staleTime: 5 * 60_000,
   });
-
 
   return (
     <div className="border-t border-border bg-background/40 px-5 py-4">
@@ -493,9 +791,7 @@ function NewsPanel({ symbol, name }: { symbol: string; name: string }) {
                 className="group flex items-start justify-between gap-3 rounded-md p-2 transition hover:bg-accent/40"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium group-hover:text-primary">
-                    {n.title}
-                  </div>
+                  <div className="text-sm font-medium group-hover:text-primary">{n.title}</div>
                   <div className="mt-0.5 text-[11px] text-muted-foreground">
                     {n.publisher} · {timeAgo(n.publishedAt)}
                   </div>

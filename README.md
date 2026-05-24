@@ -36,7 +36,6 @@ Here are the primary files driving the application logic:
    - Coordinates the dashboard view, including filters, sector tags, search bar, and general statistics cards.
    - Includes components such as `<StatCard />`, `<StockRow />`, `<IndicatorPanel />`, and `<NewsPanel />`.
    - Utilizes `localStorage` for watchlist state management.
-   
 2. **[src/lib/stocks.functions.ts](file:///c:/Users/asasikumar/Desktop/nimble-market-finder/src/lib/stocks.functions.ts)**:
    - The algorithmic backbone of the application. Calculates standard math helpers like SMA, EMA, RSI, Standard Deviation, and Bollinger Bands.
    - Defines the sector/ticker lists and exports TanStack Server Functions: `getIndianStocks()` and `getStockNews()`.
@@ -56,27 +55,28 @@ Here are the primary files driving the application logic:
 
 The application computes signals using the `deriveSignal()` function inside [src/lib/stocks.functions.ts](file:///c:/Users/asasikumar/Desktop/nimble-market-finder/src/lib/stocks.functions.ts). The score is calculated as follows:
 
-| Factor | Technical Criteria | Score Impact | Reason Logged |
-| :--- | :--- | :--- | :--- |
-| **1. Long-term Trend** | Price is above the 200-day Simple Moving Average (SMA) | `+1.0` | Above 200-day MA (long uptrend) |
-| | Price is below the 200-day Simple Moving Average (SMA) | `-1.0` | Below 200-day MA (long downtrend) |
-| **2. Short-term Trend** | SMA 20 is greater than SMA 50 (Golden Cross) | `+1.0` | SMA20 > SMA50 (bullish cross) |
-| | SMA 20 is less than SMA 50 (Death Cross) | `-1.0` | SMA20 < SMA50 (bearish cross) |
-| **3. Momentum Indicator**| MACD Histogram is positive | `+1.0` | MACD positive |
-| | MACD Histogram is negative | `-1.0` | MACD negative |
-| **4. RSI Conditions** | RSI-14 is oversold (`< 30`) | `+2.0` | Oversold RSI |
-| | RSI-14 is overbought (`> 70`) | `-2.0` | Overbought RSI |
-| | RSI-14 is in a healthy momentum zone (`50 - 65`) | `+0.5` | Healthy RSI |
-| **5. Bollinger Bands** | Price is near lower band (`bbPct <= 0.1`) | `+1.0` | Near lower Bollinger band |
-| | Price is near upper band (`bbPct >= 0.9`) | `-1.0` | Near upper Bollinger band |
-| **6. 52-Week Proximity** | Price is within 15% of the 52-week low | `+1.0` | Only X% above 52w low |
-| | Price is within 5% of the 52-week high | `-1.0` | Within X% of 52w high |
-| **7. 1-Month Momentum** | Stock price gained more than 8% over the past month | `+0.5` | 1m momentum +X% |
-| | Stock price lost more than 8% over the past month | `-0.5` | 1m momentum -X% |
-| **8. Volume Confirmation**| Volume surges > 1.3x 20-day average during positive momentum | `+0.5` | Volume surge Xx |
-| | Volume surges > 1.3x 20-day average during negative momentum | `-0.5` | Heavy selling volume Xx |
+| Factor                     | Technical Criteria                                           | Score Impact | Reason Logged                     |
+| :------------------------- | :----------------------------------------------------------- | :----------- | :-------------------------------- |
+| **1. Long-term Trend**     | Price is above the 200-day Simple Moving Average (SMA)       | `+1.0`       | Above 200-day MA (long uptrend)   |
+|                            | Price is below the 200-day Simple Moving Average (SMA)       | `-1.0`       | Below 200-day MA (long downtrend) |
+| **2. Short-term Trend**    | SMA 20 is greater than SMA 50 (Golden Cross)                 | `+1.0`       | SMA20 > SMA50 (bullish cross)     |
+|                            | SMA 20 is less than SMA 50 (Death Cross)                     | `-1.0`       | SMA20 < SMA50 (bearish cross)     |
+| **3. Momentum Indicator**  | MACD Histogram is positive                                   | `+1.0`       | MACD positive                     |
+|                            | MACD Histogram is negative                                   | `-1.0`       | MACD negative                     |
+| **4. RSI Conditions**      | RSI-14 is oversold (`< 30`)                                  | `+2.0`       | Oversold RSI                      |
+|                            | RSI-14 is overbought (`> 70`)                                | `-2.0`       | Overbought RSI                    |
+|                            | RSI-14 is in a healthy momentum zone (`50 - 65`)             | `+0.5`       | Healthy RSI                       |
+| **5. Bollinger Bands**     | Price is near lower band (`bbPct <= 0.1`)                    | `+1.0`       | Near lower Bollinger band         |
+|                            | Price is near upper band (`bbPct >= 0.9`)                    | `-1.0`       | Near upper Bollinger band         |
+| **6. 52-Week Proximity**   | Price is within 15% of the 52-week low                       | `+1.0`       | Only X% above 52w low             |
+|                            | Price is within 5% of the 52-week high                       | `-1.0`       | Within X% of 52w high             |
+| **7. 1-Month Momentum**    | Stock price gained more than 8% over the past month          | `+0.5`       | 1m momentum +X%                   |
+|                            | Stock price lost more than 8% over the past month            | `-0.5`       | 1m momentum -X%                   |
+| **8. Volume Confirmation** | Volume surges > 1.3x 20-day average during positive momentum | `+0.5`       | Volume surge Xx                   |
+|                            | Volume surges > 1.3x 20-day average during negative momentum | `-0.5`       | Heavy selling volume Xx           |
 
 ### Signal Thresholds
+
 - **`BUY`**: Score of `+2.5` or higher
 - **`SELL`**: Score of `-2.5` or lower
 - **`HOLD`**: Score is neutral between `-2.5` and `+2.5`
@@ -91,13 +91,13 @@ Follow these steps to run the application on your own computer.
 
 To run this website locally, you need a JavaScript runtime environment. You can use either **Node.js** (most common) or **Bun** (faster, recommended if you have it installed).
 
-*   **Option A: Node.js (Recommended for Beginners)**
-    1.  Go to [nodejs.org](https://nodejs.org/).
-    2.  Download and install the **LTS (Long Term Support)** version for your operating system.
-    3.  This installer automatically installs both `node` and `npm` (Node Package Manager).
-*   **Option B: Bun (Advanced)**
-    1.  Go to [bun.sh](https://bun.sh/).
-    2.  Follow the installation command for your operating system.
+- **Option A: Node.js (Recommended for Beginners)**
+  1.  Go to [nodejs.org](https://nodejs.org/).
+  2.  Download and install the **LTS (Long Term Support)** version for your operating system.
+  3.  This installer automatically installs both `node` and `npm` (Node Package Manager).
+- **Option B: Bun (Advanced)**
+  1.  Go to [bun.sh](https://bun.sh/).
+  2.  Follow the installation command for your operating system.
 
 ---
 
@@ -106,14 +106,14 @@ To run this website locally, you need a JavaScript runtime environment. You can 
 1.  Open your code editor (like Visual Studio Code).
 2.  Open the project folder inside your editor.
 3.  Open a new terminal window:
-    *   In VS Code: Press `Ctrl + ` ` (backtick) or go to the top menu and select **Terminal > New Terminal**.
-    *   Alternatively: Open your system's Command Prompt (cmd) or PowerShell, and navigate to the project directory.
+    - In VS Code: Press `Ctrl + ` ` (backtick) or go to the top menu and select **Terminal > New Terminal**.
+    - Alternatively: Open your system's Command Prompt (cmd) or PowerShell, and navigate to the project directory.
 
 ---
 
 ### 📦 Step 3: Install the Project Dependencies
 
-Before running the app, you need to download the external code libraries (like React, TanStack, and Tailwind CSS) that it relies on. 
+Before running the app, you need to download the external code libraries (like React, TanStack, and Tailwind CSS) that it relies on.
 
 Type **one** of the following commands in your terminal and press **Enter**:
 
@@ -124,7 +124,8 @@ npm install
 # If you are using Bun:
 bun install
 ```
-*This might take a minute or two as it downloads the packages into a folder named `node_modules`.*
+
+_This might take a minute or two as it downloads the packages into a folder named `node_modules`._
 
 ---
 
@@ -143,12 +144,14 @@ bun dev
 ```
 
 You should see output text in your terminal indicating that the server is running, showing a link like this:
+
 ```
   Ready in 1.2s
   ➜  Local:   http://localhost:3000/
 ```
 
 **To view the app:**
+
 1.  Hold down the `Ctrl` key (Windows/Linux) or `Cmd` key (macOS) and click the `http://localhost:3000/` link in the terminal.
 2.  Alternatively, open your web browser (Chrome, Safari, Edge, etc.) and type `http://localhost:3000` in the address bar.
 
@@ -157,6 +160,7 @@ You should see output text in your terminal indicating that the server is runnin
 ### 🛠️ Step 5: Troubleshooting (Common Issues)
 
 #### 🛑 Error: "File npm.ps1 cannot be loaded because running scripts is disabled..." (Windows)
+
 If you see this error on Windows when running PowerShell, your operating system is blocking custom scripts for security. You can solve this in three ways:
 
 1.  **Use Command Prompt (CMD) instead of PowerShell**: Click the arrow dropdown next to the `+` sign in the VS Code terminal and select **Command Prompt**. Run `npm run dev` there.
@@ -167,8 +171,9 @@ If you see this error on Windows when running PowerShell, your operating system 
     ```
 
 #### 🛑 Command Not Found / Command Not Recognized
-*   Make sure you installed Node.js or Bun in Step 1.
-*   Try closing your code editor entirely and reopening it to refresh your terminal path.
+
+- Make sure you installed Node.js or Bun in Step 1.
+- Try closing your code editor entirely and reopening it to refresh your terminal path.
 
 ---
 

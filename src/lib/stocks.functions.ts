@@ -47,8 +47,29 @@ export interface StockQuote {
   suggestedSellPrice: number;
   suggestedBuyPrice: number;
   updatedAt: number;
+  // New indicators
+  adx: number;
+  adxTrend: "STRONG" | "WEAK" | "SIDEWAYS";
+  mfi: number;
+  macdCross: "BULLISH" | "BEARISH" | "NONE";
+  fib236: number;
+  fib382: number;
+  fib500: number;
+  fib618: number;
+  fib786: number;
+  pivotPP: number;
+  pivotS1: number;
+  pivotS2: number;
+  pivotR1: number;
+  pivotR2: number;
+  accumulationZoneMin: number;
+  accumulationZoneMax: number;
+  target1: number;
+  target2: number;
+  stopLoss: number;
+  confluenceReasons: string[];
+  confidenceTier: "HIGH" | "MEDIUM" | "LOW";
 }
-
 
 const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   // Banking
@@ -68,6 +89,8 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "BANDHANBNK.NS", name: "Bandhan Bank", sector: "Banking" },
   { symbol: "RBLBANK.NS", name: "RBL Bank", sector: "Banking" },
   { symbol: "YESBANK.NS", name: "Yes Bank", sector: "Banking" },
+  { symbol: "IDBI.NS", name: "IDBI Bank", sector: "Banking" },
+  { symbol: "BOI.NS", name: "Bank of India", sector: "Banking" },
   // Financials / NBFC
   { symbol: "BAJFINANCE.NS", name: "Bajaj Finance", sector: "Financials" },
   { symbol: "BAJAJFINSV.NS", name: "Bajaj Finserv", sector: "Financials" },
@@ -81,6 +104,8 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "IRFC.NS", name: "Indian Railway Finance Corp", sector: "Financials" },
   { symbol: "HDFCAMC.NS", name: "HDFC Asset Management", sector: "Financials" },
   { symbol: "BSE.NS", name: "BSE Limited", sector: "Financials" },
+  { symbol: "M&MFIN.NS", name: "M&M Financial Services", sector: "Financials" },
+  { symbol: "HUDCO.NS", name: "Housing & Urban Development Corp", sector: "Financials" },
   // Insurance
   { symbol: "LICI.NS", name: "Life Insurance Corp of India", sector: "Insurance" },
   { symbol: "HDFCLIFE.NS", name: "HDFC Life Insurance", sector: "Insurance" },
@@ -98,6 +123,8 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "COFORGE.NS", name: "Coforge", sector: "IT" },
   { symbol: "MPHASIS.NS", name: "Mphasis", sector: "IT" },
   { symbol: "OFSS.NS", name: "Oracle Financial Services", sector: "IT" },
+  { symbol: "TATAELXSI.NS", name: "Tata Elxsi", sector: "IT" },
+  { symbol: "KPITTECH.NS", name: "KPIT Technologies", sector: "IT" },
   // Energy & Oil
   { symbol: "RELIANCE.NS", name: "Reliance Industries", sector: "Energy" },
   { symbol: "ONGC.NS", name: "Oil & Natural Gas Corp", sector: "Energy" },
@@ -108,6 +135,7 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "GAIL.NS", name: "GAIL India", sector: "Energy" },
   { symbol: "OIL.NS", name: "Oil India", sector: "Energy" },
   { symbol: "PETRONET.NS", name: "Petronet LNG", sector: "Energy" },
+  { symbol: "MRPL.NS", name: "Mangalore Refinery", sector: "Energy" },
   // Power & Utilities
   { symbol: "NTPC.NS", name: "NTPC", sector: "Power" },
   { symbol: "POWERGRID.NS", name: "Power Grid Corp", sector: "Power" },
@@ -119,18 +147,26 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "SJVN.NS", name: "SJVN", sector: "Power" },
   { symbol: "TORNTPOWER.NS", name: "Torrent Power", sector: "Power" },
   { symbol: "SUZLON.NS", name: "Suzlon Energy", sector: "Power" },
+  { symbol: "IREDA.NS", name: "IREDA (Renewable Energy)", sector: "Power" },
   // Conglomerate
   { symbol: "ADANIENT.NS", name: "Adani Enterprises", sector: "Conglomerate" },
   { symbol: "GRASIM.NS", name: "Grasim Industries", sector: "Conglomerate" },
   { symbol: "ITC.NS", name: "ITC Limited", sector: "Conglomerate" },
+  { symbol: "TATAINVEST.NS", name: "Tata Investment Corporation", sector: "Conglomerate" },
   // Infra & Construction
   { symbol: "LT.NS", name: "Larsen & Toubro", sector: "Infrastructure" },
   { symbol: "ADANIPORTS.NS", name: "Adani Ports", sector: "Infrastructure" },
   { symbol: "GMRINFRA.NS", name: "GMR Airports", sector: "Infrastructure" },
   { symbol: "IRB.NS", name: "IRB Infrastructure", sector: "Infrastructure" },
+  { symbol: "RVNL.NS", name: "Rail Vikas Nigam (RVNL)", sector: "Infrastructure" },
+  { symbol: "IRCON.NS", name: "Ircon International", sector: "Infrastructure" },
+  { symbol: "RAILTEL.NS", name: "RailTel Corporation", sector: "Infrastructure" },
+  { symbol: "CONCOR.NS", name: "Container Corp (CONCOR)", sector: "Infrastructure" },
+  { symbol: "NBCC.NS", name: "NBCC India", sector: "Infrastructure" },
   // Auto
   { symbol: "MARUTI.NS", name: "Maruti Suzuki", sector: "Auto" },
   { symbol: "TATAMOTORS.NS", name: "Tata Motors", sector: "Auto" },
+  { symbol: "TATAMTRDVR.NS", name: "Tata Motors DVR", sector: "Auto" },
   { symbol: "M&M.NS", name: "Mahindra & Mahindra", sector: "Auto" },
   { symbol: "BAJAJ-AUTO.NS", name: "Bajaj Auto", sector: "Auto" },
   { symbol: "HEROMOTOCO.NS", name: "Hero MotoCorp", sector: "Auto" },
@@ -141,6 +177,11 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "MOTHERSON.NS", name: "Samvardhana Motherson", sector: "Auto" },
   { symbol: "BALKRISIND.NS", name: "Balkrishna Industries", sector: "Auto" },
   { symbol: "MRF.NS", name: "MRF", sector: "Auto" },
+  { symbol: "APOLLOTYRE.NS", name: "Apollo Tyres", sector: "Auto" },
+  { symbol: "EXIDEIND.NS", name: "Exide Industries", sector: "Auto" },
+  { symbol: "ARE&M.NS", name: "Amara Raja Energy", sector: "Auto" },
+  { symbol: "SONACOMS.NS", name: "Sona BLW Precision", sector: "Auto" },
+  { symbol: "UNOINDA.NS", name: "Uno Minda", sector: "Auto" },
   // FMCG
   { symbol: "HINDUNILVR.NS", name: "Hindustan Unilever", sector: "FMCG" },
   { symbol: "NESTLEIND.NS", name: "Nestle India", sector: "FMCG" },
@@ -165,6 +206,7 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "ALKEM.NS", name: "Alkem Laboratories", sector: "Pharma" },
   { symbol: "BIOCON.NS", name: "Biocon", sector: "Pharma" },
   { symbol: "GLENMARK.NS", name: "Glenmark Pharmaceuticals", sector: "Pharma" },
+  { symbol: "MANKIND.NS", name: "Mankind Pharma", sector: "Pharma" },
   { symbol: "APOLLOHOSP.NS", name: "Apollo Hospitals", sector: "Healthcare" },
   { symbol: "MAXHEALTH.NS", name: "Max Healthcare", sector: "Healthcare" },
   { symbol: "FORTIS.NS", name: "Fortis Healthcare", sector: "Healthcare" },
@@ -178,6 +220,7 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "NMDC.NS", name: "NMDC", sector: "Metals" },
   { symbol: "NATIONALUM.NS", name: "National Aluminium", sector: "Metals" },
   { symbol: "HINDZINC.NS", name: "Hindustan Zinc", sector: "Metals" },
+  { symbol: "HINDCOPPER.NS", name: "Hindustan Copper", sector: "Metals" },
   // Cement
   { symbol: "ULTRACEMCO.NS", name: "UltraTech Cement", sector: "Cement" },
   { symbol: "AMBUJACEM.NS", name: "Ambuja Cements", sector: "Cement" },
@@ -206,12 +249,13 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "NYKAA.NS", name: "Nykaa", sector: "Retail" },
   { symbol: "ABFRL.NS", name: "Aditya Birla Fashion & Retail", sector: "Retail" },
   { symbol: "PAGEIND.NS", name: "Page Industries", sector: "Retail" },
+  { symbol: "KALYANKJIL.NS", name: "Kalyan Jewellers", sector: "Retail" },
   { symbol: "VOLTAS.NS", name: "Voltas", sector: "Consumer Durables" },
   { symbol: "HAVELLS.NS", name: "Havells India", sector: "Consumer Durables" },
   { symbol: "CROMPTON.NS", name: "Crompton Greaves Consumer", sector: "Consumer Durables" },
   { symbol: "DIXON.NS", name: "Dixon Technologies", sector: "Consumer Durables" },
   // Tech / Fintech / New Age
-  { symbol: "ZOMATO.NS", name: "Zomato (Eternal)", sector: "Tech" },
+  { symbol: "ZOMATO.NS", name: "Zomato", sector: "Tech" },
   { symbol: "PAYTM.NS", name: "Paytm", sector: "Fintech" },
   { symbol: "POLICYBZR.NS", name: "PB Fintech (Policybazaar)", sector: "Fintech" },
   { symbol: "NAUKRI.NS", name: "Info Edge (Naukri)", sector: "Tech" },
@@ -220,6 +264,9 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "HAL.NS", name: "Hindustan Aeronautics", sector: "Defence" },
   { symbol: "BEL.NS", name: "Bharat Electronics", sector: "Defence" },
   { symbol: "MAZDOCK.NS", name: "Mazagon Dock Shipbuilders", sector: "Defence" },
+  { symbol: "COCHINSHIP.NS", name: "Cochin Shipyard", sector: "Defence" },
+  { symbol: "BDL.NS", name: "Bharat Dynamics (BDL)", sector: "Defence" },
+  { symbol: "GRSE.NS", name: "Garden Reach Shipbuilders", sector: "Defence" },
   { symbol: "BHEL.NS", name: "Bharat Heavy Electricals", sector: "Capital Goods" },
   { symbol: "SIEMENS.NS", name: "Siemens India", sector: "Capital Goods" },
   { symbol: "ABB.NS", name: "ABB India", sector: "Capital Goods" },
@@ -231,7 +278,6 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "PRESTIGE.NS", name: "Prestige Estates", sector: "Real Estate" },
   { symbol: "LODHA.NS", name: "Macrotech Developers (Lodha)", sector: "Real Estate" },
 ];
-
 
 function sma(values: number[], period: number): number {
   if (values.length < period) return values.reduce((a, b) => a + b, 0) / values.length;
@@ -285,6 +331,129 @@ function stddev(values: number[]): number {
   return Math.sqrt(variance);
 }
 
+function calculateADX(
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  period = 14,
+): { adx: number; trend: "STRONG" | "WEAK" | "SIDEWAYS" } {
+  if (closes.length < period * 2) {
+    return { adx: 20, trend: "SIDEWAYS" };
+  }
+  const tr: number[] = [];
+  const plusDM: number[] = [];
+  const minusDM: number[] = [];
+
+  for (let i = 1; i < closes.length; i++) {
+    const hDiff = highs[i] - highs[i - 1];
+    const lDiff = lows[i - 1] - lows[i];
+
+    const trVal = Math.max(
+      highs[i] - lows[i],
+      Math.abs(highs[i] - closes[i - 1]),
+      Math.abs(lows[i] - closes[i - 1]),
+    );
+    tr.push(trVal);
+
+    const pDM = hDiff > lDiff && hDiff > 0 ? hDiff : 0;
+    const mDM = lDiff > hDiff && lDiff > 0 ? lDiff : 0;
+    plusDM.push(pDM);
+    minusDM.push(mDM);
+  }
+
+  // Wilder's Smoothing for initial period
+  let trSmoothed = tr.slice(0, period).reduce((a, b) => a + b, 0);
+  let plusDMSmoothed = plusDM.slice(0, period).reduce((a, b) => a + b, 0);
+  let minusDMSmoothed = minusDM.slice(0, period).reduce((a, b) => a + b, 0);
+
+  const dxValues: number[] = [];
+  const initialPlusDI = trSmoothed > 0 ? (plusDMSmoothed / trSmoothed) * 100 : 0;
+  const initialMinusDI = trSmoothed > 0 ? (minusDMSmoothed / trSmoothed) * 100 : 0;
+  const initialDX =
+    (Math.abs(initialPlusDI - initialMinusDI) / (initialPlusDI + initialMinusDI || 1)) * 100;
+  dxValues.push(initialDX);
+
+  for (let i = period; i < tr.length; i++) {
+    trSmoothed = trSmoothed - trSmoothed / period + tr[i];
+    plusDMSmoothed = plusDMSmoothed - plusDMSmoothed / period + plusDM[i];
+    minusDMSmoothed = minusDMSmoothed - minusDMSmoothed / period + minusDM[i];
+
+    const plusDI = trSmoothed > 0 ? (plusDMSmoothed / trSmoothed) * 100 : 0;
+    const minusDI = trSmoothed > 0 ? (minusDMSmoothed / trSmoothed) * 100 : 0;
+    const dx = (Math.abs(plusDI - minusDI) / (plusDI + minusDI || 1)) * 100;
+    dxValues.push(dx);
+  }
+
+  if (dxValues.length < period) {
+    return { adx: 20, trend: "SIDEWAYS" };
+  }
+
+  let adx = dxValues.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  for (let i = period; i < dxValues.length; i++) {
+    adx = (adx * (period - 1) + dxValues[i]) / period;
+  }
+
+  let trend: "STRONG" | "WEAK" | "SIDEWAYS" = "SIDEWAYS";
+  if (adx > 25) trend = "STRONG";
+  else if (adx < 20) trend = "WEAK";
+
+  return { adx, trend };
+}
+
+function calculateMFI(
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  volumes: number[],
+  period = 14,
+): number {
+  if (closes.length < period + 1) return 50;
+  const typicalPrices: number[] = [];
+  const rawMoneyFlows: number[] = [];
+
+  for (let i = 0; i < closes.length; i++) {
+    const tp = (highs[i] + lows[i] + closes[i]) / 3;
+    typicalPrices.push(tp);
+    rawMoneyFlows.push(tp * (volumes[i] || 0));
+  }
+
+  let positiveFlow = 0;
+  let negativeFlow = 0;
+
+  for (let i = closes.length - period; i < closes.length; i++) {
+    if (i <= 0) continue;
+    if (typicalPrices[i] > typicalPrices[i - 1]) {
+      positiveFlow += rawMoneyFlows[i];
+    } else if (typicalPrices[i] < typicalPrices[i - 1]) {
+      negativeFlow += rawMoneyFlows[i];
+    }
+  }
+
+  if (negativeFlow === 0) return 100;
+  const mr = positiveFlow / negativeFlow;
+  return 100 - 100 / (1 + mr);
+}
+
+function detectMACDCrossover(
+  macdLine: number[],
+  macdSignal: number[],
+): "BULLISH" | "BEARISH" | "NONE" {
+  const len = macdLine.length;
+  if (len < 3) return "NONE";
+  const todayMacd = macdLine[len - 1];
+  const todaySig = macdSignal[len - 1];
+  const yesterdayMacd = macdLine[len - 2];
+  const yesterdaySig = macdSignal[len - 2];
+
+  if (yesterdayMacd <= yesterdaySig && todayMacd > todaySig) {
+    return "BULLISH";
+  }
+  if (yesterdayMacd >= yesterdaySig && todayMacd < todaySig) {
+    return "BEARISH";
+  }
+  return "NONE";
+}
+
 interface Indicators {
   sma20: number;
   sma50: number;
@@ -307,31 +476,67 @@ interface Indicators {
   momentum3m: number;
   avgVolume20: number;
   volumeRatio: number;
+  adx: number;
+  adxTrend: "STRONG" | "WEAK" | "SIDEWAYS";
+  mfi: number;
+  macdCross: "BULLISH" | "BEARISH" | "NONE";
+  fib236: number;
+  fib382: number;
+  fib500: number;
+  fib618: number;
+  fib786: number;
+  pivotPP: number;
+  pivotS1: number;
+  pivotS2: number;
+  pivotR1: number;
+  pivotR2: number;
 }
 
-function deriveSignal(price: number, ind: Indicators): { signal: Signal; reasons: string[]; score: number; confidence: number } {
+function deriveSignal(
+  price: number,
+  ind: Indicators,
+): {
+  signal: Signal;
+  reasons: string[];
+  score: number;
+  confidence: number;
+  confluenceReasons: string[];
+  confidenceTier: "HIGH" | "MEDIUM" | "LOW";
+} {
   let score = 0;
   const reasons: string[] = [];
+  const confluenceReasons: string[] = [];
 
-  // Trend: price vs SMA200 (long-term)
+  const isTrendStrong = ind.adxTrend === "STRONG";
+  const isTrendWeak = ind.adxTrend === "WEAK";
+
+  // 1. Long-term Trend: price vs SMA200
   if (ind.sma200 && price > ind.sma200) {
-    score += 1;
+    const wt = isTrendStrong ? 1.5 : 1.0;
+    score += wt;
     reasons.push("Above 200-day MA (long uptrend)");
+    confluenceReasons.push(`Bullish long-term trend (Price > SMA200)`);
   } else if (ind.sma200 && price < ind.sma200) {
-    score -= 1;
+    const wt = isTrendStrong ? 1.5 : 1.0;
+    score -= wt;
     reasons.push("Below 200-day MA (long downtrend)");
+    confluenceReasons.push(`Bearish long-term trend (Price < SMA200)`);
   }
 
-  // Short/Mid trend: SMA20 vs SMA50
+  // 2. Short/Mid trend: SMA20 vs SMA50
   if (ind.sma20 > ind.sma50) {
-    score += 1;
+    const wt = isTrendStrong ? 1.5 : 1.0;
+    score += wt;
     reasons.push("SMA20 > SMA50 (bullish cross)");
+    confluenceReasons.push("SMA Golden crossover (SMA20 > SMA50)");
   } else if (ind.sma20 < ind.sma50) {
-    score -= 1;
+    const wt = isTrendStrong ? 1.5 : 1.0;
+    score -= wt;
     reasons.push("SMA20 < SMA50 (bearish cross)");
+    confluenceReasons.push("SMA Death crossover (SMA20 < SMA50)");
   }
 
-  // MACD histogram momentum
+  // 3. MACD histogram momentum
   if (ind.macdHist > 0) {
     score += 1;
     reasons.push(`MACD positive (${ind.macdHist.toFixed(2)})`);
@@ -340,13 +545,27 @@ function deriveSignal(price: number, ind: Indicators): { signal: Signal; reasons
     reasons.push(`MACD negative (${ind.macdHist.toFixed(2)})`);
   }
 
-  // RSI extremes
+  // 4. MACD Crossover
+  if (ind.macdCross === "BULLISH") {
+    score += 1.5;
+    reasons.push("Bullish MACD crossover");
+    confluenceReasons.push("Bullish MACD Line crossover");
+  } else if (ind.macdCross === "BEARISH") {
+    score -= 1.5;
+    reasons.push("Bearish MACD crossover");
+    confluenceReasons.push("Bearish MACD Line crossover");
+  }
+
+  // 5. RSI extremes
+  const rsiWeight = isTrendWeak ? 2.5 : 2.0;
   if (ind.rsi < 30) {
-    score += 2;
+    score += rsiWeight;
     reasons.push(`Oversold RSI ${ind.rsi.toFixed(0)}`);
+    confluenceReasons.push(`Oversold RSI condition (<30)`);
   } else if (ind.rsi > 70) {
-    score -= 2;
+    score -= rsiWeight;
     reasons.push(`Overbought RSI ${ind.rsi.toFixed(0)}`);
+    confluenceReasons.push(`Overbought RSI condition (>70)`);
   } else if (ind.rsi >= 50 && ind.rsi <= 65) {
     score += 0.5;
     reasons.push(`Healthy RSI ${ind.rsi.toFixed(0)}`);
@@ -354,16 +573,65 @@ function deriveSignal(price: number, ind: Indicators): { signal: Signal; reasons
     reasons.push(`Neutral RSI ${ind.rsi.toFixed(0)}`);
   }
 
-  // Bollinger position
-  if (ind.bbPct <= 0.1) {
-    score += 1;
-    reasons.push("Near lower Bollinger band");
-  } else if (ind.bbPct >= 0.9) {
-    score -= 1;
-    reasons.push("Near upper Bollinger band");
+  // 6. Money Flow Index (MFI)
+  if (ind.mfi < 20) {
+    score += 1.5;
+    reasons.push(`Oversold MFI ${ind.mfi.toFixed(0)}`);
+    confluenceReasons.push("Oversold volume-weighted Money Flow Index (<20)");
+  } else if (ind.mfi > 80) {
+    score -= 1.5;
+    reasons.push(`Overbought MFI ${ind.mfi.toFixed(0)}`);
+    confluenceReasons.push("Overbought volume-weighted Money Flow Index (>80)");
   }
 
-  // 52-week position
+  // 7. Bollinger position
+  const bbWeight = isTrendWeak ? 1.5 : 1.0;
+  if (ind.bbPct <= 0.1) {
+    score += bbWeight;
+    reasons.push("Near lower Bollinger band");
+    confluenceReasons.push("Price near lower Bollinger Band");
+  } else if (ind.bbPct >= 0.9) {
+    score -= bbWeight;
+    reasons.push("Near upper Bollinger band");
+    confluenceReasons.push("Price near upper Bollinger Band");
+  }
+
+  // 8. Fibonacci Retracement Support/Resistance
+  const isNearFib618 = Math.abs(price - ind.fib618) / ind.fib618 <= 0.02;
+  const isNearFib500 = Math.abs(price - ind.fib500) / ind.fib500 <= 0.02;
+  if (isNearFib618) {
+    if (price >= ind.fib618) {
+      score += 1.0;
+      reasons.push("Holding 61.8% Fibonacci support");
+      confluenceReasons.push("Price holding 61.8% Golden Ratio Fibonacci support");
+    } else {
+      score -= 0.5;
+      reasons.push("Broke 61.8% Fibonacci support");
+    }
+  } else if (isNearFib500) {
+    if (price >= ind.fib500) {
+      score += 0.8;
+      reasons.push("Holding 50% Fibonacci support");
+      confluenceReasons.push("Price holding 50% Fibonacci retracement support");
+    } else {
+      score -= 0.4;
+      reasons.push("Broke 50% Fibonacci support");
+    }
+  }
+
+  // 9. Pivot Point Proximity
+  const isNearS1 = Math.abs(price - ind.pivotS1) / ind.pivotS1 <= 0.015;
+  const isNearS2 = Math.abs(price - ind.pivotS2) / ind.pivotS2 <= 0.015;
+  if (isNearS1 && price >= ind.pivotS1) {
+    score += 0.5;
+    reasons.push("Holding Pivot Support S1");
+  } else if (isNearS2 && price >= ind.pivotS2) {
+    score += 1.0;
+    reasons.push("Holding Pivot Support S2");
+    confluenceReasons.push("Price holding key Pivot Support S2");
+  }
+
+  // 10. 52-week position
   if (ind.pctFrom52Low < 15 && ind.pctFrom52Low > 0) {
     score += 1;
     reasons.push(`Only ${ind.pctFrom52Low.toFixed(1)}% above 52w low`);
@@ -373,7 +641,7 @@ function deriveSignal(price: number, ind: Indicators): { signal: Signal; reasons
     reasons.push(`Within ${Math.abs(ind.pctFrom52High).toFixed(1)}% of 52w high`);
   }
 
-  // Momentum
+  // 11. Momentum
   if (ind.momentum1m > 8) {
     score += 0.5;
     reasons.push(`1m momentum +${ind.momentum1m.toFixed(1)}%`);
@@ -382,28 +650,36 @@ function deriveSignal(price: number, ind: Indicators): { signal: Signal; reasons
     reasons.push(`1m momentum ${ind.momentum1m.toFixed(1)}%`);
   }
 
-  // Volume surge with positive momentum = stronger buy
+  // 12. Volume surge with positive momentum
   if (ind.volumeRatio > 1.3 && ind.momentum1m > 0) {
-    score += 0.5;
+    score += 1.0;
     reasons.push(`Volume surge ${ind.volumeRatio.toFixed(2)}x`);
+    confluenceReasons.push(
+      `Volume surge (${ind.volumeRatio.toFixed(2)}x) confirming buying pressure`,
+    );
   } else if (ind.volumeRatio > 1.3 && ind.momentum1m < 0) {
-    score -= 0.5;
+    score -= 1.0;
     reasons.push(`Heavy selling volume ${ind.volumeRatio.toFixed(2)}x`);
+    confluenceReasons.push(
+      `Volume surge (${ind.volumeRatio.toFixed(2)}x) during price drop (distribution)`,
+    );
   }
 
   let signal: Signal = "HOLD";
   if (score >= 2.5) signal = "BUY";
   else if (score <= -2.5) signal = "SELL";
 
-  // Confidence: |score| scaled to 0-100, max meaningful ~6
-  const confidence = Math.max(20, Math.min(100, Math.round((Math.abs(score) / 6) * 100)));
+  const confidence = Math.max(20, Math.min(100, Math.round((Math.abs(score) / 8) * 100)));
 
-  return { signal, reasons, score, confidence };
+  let confidenceTier: "HIGH" | "MEDIUM" | "LOW" = "LOW";
+  if (confidence >= 75) confidenceTier = "HIGH";
+  else if (confidence >= 45) confidenceTier = "MEDIUM";
+
+  return { signal, reasons, score, confidence, confluenceReasons, confidenceTier };
 }
 
 async function fetchOne(symbol: string, name: string, sector: string): Promise<StockQuote | null> {
   try {
-    // 1-year daily data — needed for SMA200 and 52-week H/L
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1y`;
     const res = await fetch(url, {
       headers: {
@@ -412,7 +688,8 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       },
     });
     if (!res.ok) return null;
-    const json: any = await res.json();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const json = (await res.json()) as any;
     const result = json?.chart?.result?.[0];
     if (!result) return null;
     const meta = result.meta;
@@ -421,17 +698,26 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const rawLows: (number | null)[] = result.indicators?.quote?.[0]?.low ?? [];
     const rawVols: (number | null)[] = result.indicators?.quote?.[0]?.volume ?? [];
 
-    const closes: number[] = rawCloses.filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
-    const highs: number[] = rawHighs.filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
-    const lows: number[] = rawLows.filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
-    const volumes: number[] = rawVols.filter((v): v is number => typeof v === "number" && !Number.isNaN(v));
+    const closes: number[] = rawCloses.filter(
+      (v): v is number => typeof v === "number" && !Number.isNaN(v),
+    );
+    const highs: number[] = rawHighs.filter(
+      (v): v is number => typeof v === "number" && !Number.isNaN(v),
+    );
+    const lows: number[] = rawLows.filter(
+      (v): v is number => typeof v === "number" && !Number.isNaN(v),
+    );
+    const volumes: number[] = rawVols.filter(
+      (v): v is number => typeof v === "number" && !Number.isNaN(v),
+    );
 
     if (closes.length < 20) return null;
 
     const price = meta.regularMarketPrice ?? closes[closes.length - 1] ?? 0;
-    const prev = meta.chartPreviousClose ?? meta.previousClose ?? closes[closes.length - 2] ?? price;
+    const prev =
+      meta.chartPreviousClose ?? meta.previousClose ?? closes[closes.length - 2] ?? price;
     const change = price - prev;
-    const changePct = prev ? (change / prev) * 100 : 0;
+    const changePercent = prev ? (change / prev) * 100 : 0;
 
     const sma20Val = sma(closes, 20);
     const sma50Val = sma(closes, 50);
@@ -439,7 +725,6 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const ema12Val = ema(closes, 12);
     const ema26Val = ema(closes, 26);
 
-    // MACD line series and signal
     const ema12Series = emaSeries(closes, 12);
     const ema26Series = emaSeries(closes, 26);
     const macdLineSeries: number[] = [];
@@ -451,7 +736,6 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
 
     const rsiVal = rsi(closes, 14);
 
-    // Bollinger Bands (20, 2)
     const last20 = closes.slice(-20);
     const bbMid = sma20Val;
     const sd = stddev(last20);
@@ -460,37 +744,94 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const bbRange = bbUpper - bbLower;
     const bbPct = bbRange > 0 ? Math.max(0, Math.min(1, (price - bbLower) / bbRange)) : 0.5;
 
-    // 52-week High/Low — use the year range we already fetched
     const week52High = Math.max(...highs, price);
     const week52Low = Math.min(...lows, price);
     const pctFrom52High = ((price - week52High) / week52High) * 100;
     const pctFrom52Low = ((price - week52Low) / week52Low) * 100;
 
-    // Momentum
     const ago21 = closes[closes.length - 22] ?? closes[0];
     const ago63 = closes[closes.length - 64] ?? closes[0];
     const momentum1m = ago21 ? ((price - ago21) / ago21) * 100 : 0;
     const momentum3m = ago63 ? ((price - ago63) / ago63) * 100 : 0;
 
-    // Volume trend
     const recent5 = volumes.slice(-5);
     const recent20 = volumes.slice(-20);
     const avgVol5 = recent5.length ? recent5.reduce((a, b) => a + b, 0) / recent5.length : 0;
     const avgVolume20 = recent20.length ? recent20.reduce((a, b) => a + b, 0) / recent20.length : 0;
     const volumeRatio = avgVolume20 ? avgVol5 / avgVolume20 : 1;
 
+    // Advanced technical calculations
+    const { adx: adxVal, trend: adxTrend } = calculateADX(highs, lows, closes);
+    const mfiVal = calculateMFI(highs, lows, closes, volumes);
+
+    const macdSignalSeries = emaSeries(macdLineSeries, 9);
+    const macdCross = detectMACDCrossover(macdLineSeries, macdSignalSeries);
+
+    const range = week52High - week52Low;
+    const fib236 = week52High - 0.236 * range;
+    const fib382 = week52High - 0.382 * range;
+    const fib500 = week52High - 0.5 * range;
+    const fib618 = week52High - 0.618 * range;
+    const fib786 = week52High - 0.786 * range;
+
+    const prevCloseVal = closes[closes.length - 1] ?? price;
+    const prevHighVal = highs[highs.length - 1] ?? price;
+    const prevLowVal = lows[lows.length - 1] ?? price;
+    const pivotPP = (prevHighVal + prevLowVal + prevCloseVal) / 3;
+    const pivotS1 = 2 * pivotPP - prevHighVal;
+    const pivotS2 = pivotPP - (prevHighVal - prevLowVal);
+    const pivotR1 = 2 * pivotPP - prevLowVal;
+    const pivotR2 = pivotPP + (prevHighVal - prevLowVal);
+
     const indicators: Indicators = {
-      sma20: sma20Val, sma50: sma50Val, sma200: sma200Val,
-      ema12: ema12Val, ema26: ema26Val,
-      macd: macdVal, macdSignal: macdSignalVal, macdHist,
+      sma20: sma20Val,
+      sma50: sma50Val,
+      sma200: sma200Val,
+      ema12: ema12Val,
+      ema26: ema26Val,
+      macd: macdVal,
+      macdSignal: macdSignalVal,
+      macdHist,
       rsi: rsiVal,
-      bbUpper, bbLower, bbMid, bbPct,
-      week52High, week52Low, pctFrom52High, pctFrom52Low,
-      momentum1m, momentum3m,
-      avgVolume20, volumeRatio,
+      bbUpper,
+      bbLower,
+      bbMid,
+      bbPct,
+      week52High,
+      week52Low,
+      pctFrom52High,
+      pctFrom52Low,
+      momentum1m,
+      momentum3m,
+      avgVolume20,
+      volumeRatio,
+      adx: adxVal,
+      adxTrend,
+      mfi: mfiVal,
+      macdCross,
+      fib236,
+      fib382,
+      fib500,
+      fib618,
+      fib786,
+      pivotPP,
+      pivotS1,
+      pivotS2,
+      pivotR1,
+      pivotR2,
     };
 
-    const { signal, reasons, score, confidence } = deriveSignal(price, indicators);
+    const { signal, reasons, score, confidence, confluenceReasons, confidenceTier } = deriveSignal(
+      price,
+      indicators,
+    );
+
+    // Trade Plan bounds
+    const accumulationZoneMax = price;
+    const accumulationZoneMin = Math.max(price * 0.95, Math.min(price * 0.98, pivotS1, fib618));
+    const stopLoss = Math.min(pivotS2, fib786, week52Low * 0.98, price * 0.94);
+    const target1 = Math.max(price * 1.05, pivotR1, fib382);
+    const target2 = Math.max(target1 * 1.05, pivotR2, week52High);
 
     return {
       symbol,
@@ -499,7 +840,7 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       price,
       previousClose: prev,
       change,
-      changePercent: changePct,
+      changePercent,
       currency: meta.currency ?? "INR",
       ...indicators,
       signal,
@@ -507,9 +848,16 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       score,
       reasons,
       reason: reasons.join(" · "),
-      suggestedBuyPrice: Math.min(price, sma20Val, bbLower * 1.01) * 0.99,
-      suggestedSellPrice: Math.max(price, sma20Val, bbUpper * 0.99) * 1.03,
+      suggestedBuyPrice: accumulationZoneMin,
+      suggestedSellPrice: target1,
       updatedAt: Date.now(),
+      confluenceReasons,
+      confidenceTier,
+      accumulationZoneMin,
+      accumulationZoneMax,
+      target1,
+      target2,
+      stopLoss,
     };
   } catch (e) {
     console.error("fetchOne failed", symbol, e);
@@ -518,7 +866,9 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
 }
 
 export const getIndianStocks = createServerFn({ method: "GET" }).handler(async () => {
-  const results = await Promise.all(DEFAULT_TICKERS.map((t) => fetchOne(t.symbol, t.name, t.sector)));
+  const results = await Promise.all(
+    DEFAULT_TICKERS.map((t) => fetchOne(t.symbol, t.name, t.sector)),
+  );
   const quotes = results.filter((q): q is StockQuote => q !== null);
   return { quotes, fetchedAt: Date.now() };
 });
@@ -591,5 +941,3 @@ export const getStockNews = createServerFn({ method: "GET" })
       return { news: [] };
     }
   });
-
-
