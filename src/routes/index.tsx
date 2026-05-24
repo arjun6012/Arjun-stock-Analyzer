@@ -1,26 +1,223 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { getIndianStocks, type Signal, type StockQuote } from "@/lib/stocks.functions";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Dalal Signal — Indian Stocks Buy/Sell/Hold Indicator" },
+      {
+        name: "description",
+        content:
+          "Live NSE stock prices with technical buy, sell, or hold signals computed from SMA and RSI indicators.",
+      },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
+function formatINR(n: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(n);
+}
+
+const signalStyles: Record<Signal, string> = {
+  BUY: "bg-[oklch(0.72_0.18_150)]/15 text-[oklch(0.78_0.18_150)] border-[oklch(0.72_0.18_150)]/40",
+  SELL: "bg-[oklch(0.65_0.22_25)]/15 text-[oklch(0.75_0.22_25)] border-[oklch(0.65_0.22_25)]/40",
+  HOLD: "bg-[oklch(0.75_0.16_85)]/15 text-[oklch(0.82_0.16_85)] border-[oklch(0.75_0.16_85)]/40",
+};
+
+function SignalPill({ signal }: { signal: Signal }) {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wider ${signalStyles[signal]}`}
     >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {signal}
+    </span>
   );
 }
 
 function Index() {
-  return <PlaceholderIndex />;
+  const fetchStocks = useServerFn(getIndianStocks);
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
+    queryKey: ["indian-stocks"],
+    queryFn: () => fetchStocks(),
+    refetchInterval: 60_000,
+  });
+
+  const [filter, setFilter] = useState<"ALL" | Signal>("ALL");
+  const [query, setQuery] = useState("");
+
+  const quotes = data?.quotes ?? [];
+  const filtered = useMemo(() => {
+    return quotes
+      .filter((q) => (filter === "ALL" ? true : q.signal === filter))
+      .filter((q) =>
+        query
+          ? q.name.toLowerCase().includes(query.toLowerCase()) ||
+            q.symbol.toLowerCase().includes(query.toLowerCase())
+          : true,
+      );
+  }, [quotes, filter, query]);
+
+  const counts = useMemo(() => {
+    return quotes.reduce(
+      (acc, q) => {
+        acc[q.signal]++;
+        return acc;
+      },
+      { BUY: 0, SELL: 0, HOLD: 0 } as Record<Signal, number>,
+    );
+  }, [quotes]);
+
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Dalal Signal · NSE India
+            </div>
+            <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+              Buy. Sell. Hold.
+            </h1>
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+              Live prices for major Indian equities with technical signals based on SMA-20, SMA-50 and 14-day RSI.
+              Educational prototype — not investment advice.
+            </p>
+          </div>
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
+          >
+            {isFetching ? "Refreshing…" : "Refresh"}
+          </button>
+        </header>
+
+        <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatCard label="Tracked" value={quotes.length} />
+          <StatCard label="Buy signals" value={counts.BUY} tone="buy" />
+          <StatCard label="Sell signals" value={counts.SELL} tone="sell" />
+          <StatCard label="Hold" value={counts.HOLD} tone="hold" />
+        </section>
+
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <div className="flex rounded-md border border-border bg-card p-1">
+            {(["ALL", "BUY", "HOLD", "SELL"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`rounded px-3 py-1.5 text-xs font-semibold tracking-wider transition ${
+                  filter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search stock…"
+            className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+        </div>
+
+        {error ? (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-sm text-destructive-foreground">
+            Failed to load stocks. {(error as Error).message}
+          </div>
+        ) : isLoading ? (
+          <div className="grid gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-20 animate-pulse rounded-lg border border-border bg-card" />
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <div className="hidden grid-cols-12 gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:grid">
+              <div className="col-span-3">Stock</div>
+              <div className="col-span-2 text-right">Price</div>
+              <div className="col-span-2 text-right">Change</div>
+              <div className="col-span-2 text-right">Buy / Sell zone</div>
+              <div className="col-span-1 text-right">RSI</div>
+              <div className="col-span-2 text-right">Signal</div>
+            </div>
+            <ul className="divide-y divide-border">
+              {filtered.map((q) => (
+                <StockRow key={q.symbol} q={q} />
+              ))}
+              {filtered.length === 0 && (
+                <li className="px-5 py-10 text-center text-sm text-muted-foreground">No matches.</li>
+              )}
+            </ul>
+          </div>
+        )}
+
+        <footer className="mt-8 text-center text-xs text-muted-foreground">
+          Data: Yahoo Finance (delayed). Auto-refreshes every 60s.
+          {data?.fetchedAt && (
+            <> · Last update {new Date(data.fetchedAt).toLocaleTimeString("en-IN")}</>
+          )}
+        </footer>
+      </div>
+    </main>
+  );
+}
+
+function StatCard({ label, value, tone }: { label: string; value: number; tone?: "buy" | "sell" | "hold" }) {
+  const toneColor =
+    tone === "buy"
+      ? "text-[oklch(0.78_0.18_150)]"
+      : tone === "sell"
+        ? "text-[oklch(0.75_0.22_25)]"
+        : tone === "hold"
+          ? "text-[oklch(0.82_0.16_85)]"
+          : "text-foreground";
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`mt-1 text-2xl font-bold ${toneColor}`}>{value}</div>
+    </div>
+  );
+}
+
+function StockRow({ q }: { q: StockQuote }) {
+  const up = q.change >= 0;
+  return (
+    <li className="grid grid-cols-12 items-center gap-4 px-5 py-4 transition hover:bg-accent/30">
+      <div className="col-span-12 md:col-span-3">
+        <div className="font-semibold">{q.name}</div>
+        <div className="text-xs text-muted-foreground">{q.symbol.replace(".NS", "")} · NSE</div>
+      </div>
+      <div className="col-span-4 text-right md:col-span-2">
+        <div className="font-mono text-base font-semibold">{formatINR(q.price)}</div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">prev {formatINR(q.previousClose)}</div>
+      </div>
+      <div
+        className={`col-span-4 text-right md:col-span-2 font-mono text-sm font-semibold ${
+          up ? "text-[oklch(0.78_0.18_150)]" : "text-[oklch(0.75_0.22_25)]"
+        }`}
+      >
+        {up ? "▲" : "▼"} {formatINR(Math.abs(q.change))}
+        <div className="text-xs">{up ? "+" : ""}{q.changePercent.toFixed(2)}%</div>
+      </div>
+      <div className="col-span-4 text-right md:col-span-2">
+        <div className="font-mono text-xs text-[oklch(0.78_0.18_150)]">B {formatINR(q.suggestedBuyPrice)}</div>
+        <div className="font-mono text-xs text-[oklch(0.75_0.22_25)]">S {formatINR(q.suggestedSellPrice)}</div>
+      </div>
+      <div className="col-span-6 text-right md:col-span-1 font-mono text-sm">{q.rsi.toFixed(0)}</div>
+      <div className="col-span-6 md:col-span-2 flex flex-col items-end gap-1">
+        <SignalPill signal={q.signal} />
+        <div className="text-[10px] text-muted-foreground line-clamp-2 text-right">{q.reason}</div>
+      </div>
+    </li>
+  );
 }
