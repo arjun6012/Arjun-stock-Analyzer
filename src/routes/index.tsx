@@ -12,11 +12,11 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dalal Signal — Indian Stocks Buy/Sell/Hold + Live News" },
+      { title: "Arjun Signal — Indian Stocks Buy/Sell/Hold + Live News" },
       {
         name: "description",
         content:
-          "Live NSE stock prices with technical buy/sell/hold signals from SMA & RSI, plus the latest news headlines for every stock.",
+          "Live NSE stock prices across every Indian sector with technical buy/sell/hold signals from SMA & RSI, plus the latest news headlines for every stock.",
       },
     ],
   }),
