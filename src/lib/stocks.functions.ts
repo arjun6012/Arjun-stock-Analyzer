@@ -149,7 +149,7 @@ function deriveSignal(price: number, sma20Val: number, sma50Val: number, rsiVal:
   return { signal, reason: reasons.join(" · ") };
 }
 
-async function fetchOne(symbol: string, name: string): Promise<StockQuote | null> {
+async function fetchOne(symbol: string, name: string, sector: string): Promise<StockQuote | null> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=3mo`;
     const res = await fetch(url, {
@@ -178,6 +178,7 @@ async function fetchOne(symbol: string, name: string): Promise<StockQuote | null
     return {
       symbol,
       name,
+      sector,
       price,
       previousClose: prev,
       change,
@@ -199,7 +200,34 @@ async function fetchOne(symbol: string, name: string): Promise<StockQuote | null
 }
 
 export const getIndianStocks = createServerFn({ method: "GET" }).handler(async () => {
-  const results = await Promise.all(DEFAULT_TICKERS.map((t) => fetchOne(t.symbol, t.name)));
+  const results = await Promise.all(DEFAULT_TICKERS.map((t) => fetchOne(t.symbol, t.name, t.sector)));
   const quotes = results.filter((q): q is StockQuote => q !== null);
   return { quotes, fetchedAt: Date.now() };
 });
+
+export const getStockNews = createServerFn({ method: "GET" })
+  .inputValidator((data: { symbol: string }) => data)
+  .handler(async ({ data }): Promise<{ news: NewsItem[] }> => {
+    try {
+      const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(data.symbol)}&newsCount=8&quotesCount=0`;
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; LovableStocks/1.0)",
+          Accept: "application/json",
+        },
+      });
+      if (!res.ok) return { news: [] };
+      const json: any = await res.json();
+      const news: NewsItem[] = (json?.news ?? []).map((n: any) => ({
+        title: n.title ?? "",
+        link: n.link ?? "",
+        publisher: n.publisher ?? "Unknown",
+        publishedAt: (n.providerPublishTime ?? 0) * 1000,
+      })).filter((n: NewsItem) => n.title && n.link);
+      return { news };
+    } catch (e) {
+      console.error("getStockNews failed", data.symbol, e);
+      return { news: [] };
+    }
+  });
+
