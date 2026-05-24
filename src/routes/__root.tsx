@@ -72,14 +72,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Arjun stock market" },
+      { name: "description", content: "Smart Stock Signal provides real-time Indian stock prices and actionable buy/sell/hold recommendations." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Arjun stock market" },
+      { property: "og:description", content: "Smart Stock Signal provides real-time Indian stock prices and actionable buy/sell/hold recommendations." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Arjun stock market" },
+      { name: "twitter:description", content: "Smart Stock Signal provides real-time Indian stock prices and actionable buy/sell/hold recommendations." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d6698535-e006-42c3-a86e-13ea8c7a7e10/id-preview-b9fe77be--909035b7-ab36-44b9-a142-d6349167d8f5.lovable.app-1779620652010.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d6698535-e006-42c3-a86e-13ea8c7a7e10/id-preview-b9fe77be--909035b7-ab36-44b9-a142-d6349167d8f5.lovable.app-1779620652010.png" },
     ],
     links: [
       {
