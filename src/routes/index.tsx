@@ -60,18 +60,52 @@ function SignalPill({ signal }: { signal: Signal }) {
   );
 }
 
+const WATCHLIST_KEY = "arjun-signal-watchlist";
+
+function useWatchlist() {
+  const [watchlist, setWatchlist] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem(WATCHLIST_KEY);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const persist = (next: string[]) => {
+    setWatchlist(next);
+    try {
+      window.localStorage.setItem(WATCHLIST_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const toggle = (symbol: string) => {
+    persist(watchlist.includes(symbol) ? watchlist.filter((s) => s !== symbol) : [...watchlist, symbol]);
+  };
+
+  return { watchlist, toggle, isWatched: (s: string) => watchlist.includes(s) };
+}
+
 function Index() {
   const fetchStocks = useServerFn(getIndianStocks);
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ["indian-stocks"],
     queryFn: () => fetchStocks(),
-    refetchInterval: 60_000,
+    // Daily refresh — signals are computed on end-of-day data
+    refetchInterval: 24 * 60 * 60 * 1000,
+    staleTime: 12 * 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const [filter, setFilter] = useState<"ALL" | Signal>("ALL");
   const [sector, setSector] = useState<string>("ALL");
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [view, setView] = useState<"ALL" | "WATCHLIST">("ALL");
+  const { watchlist, toggle, isWatched } = useWatchlist();
 
   const quotes = data?.quotes ?? [];
 
@@ -83,6 +117,7 @@ function Index() {
 
   const filtered = useMemo(() => {
     return quotes
+      .filter((q) => (view === "WATCHLIST" ? watchlist.includes(q.symbol) : true))
       .filter((q) => (filter === "ALL" ? true : q.signal === filter))
       .filter((q) => (sector === "ALL" ? true : q.sector === sector))
       .filter((q) =>
@@ -91,7 +126,7 @@ function Index() {
             q.symbol.toLowerCase().includes(query.toLowerCase())
           : true,
       );
-  }, [quotes, filter, sector, query]);
+  }, [quotes, filter, sector, query, view, watchlist]);
 
   const counts = useMemo(() => {
     return quotes.reduce(
