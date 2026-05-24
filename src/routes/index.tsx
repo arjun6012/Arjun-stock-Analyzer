@@ -219,7 +219,19 @@ function Index() {
   );
 }
 
-function StatCard({ label, value, tone }: { label: string; value: number; tone?: "buy" | "sell" | "hold" }) {
+function StatCard({
+  label,
+  value,
+  tone,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  tone?: "buy" | "sell" | "hold";
+  active?: boolean;
+  onClick?: () => void;
+}) {
   const toneColor =
     tone === "buy"
       ? "text-[oklch(0.78_0.18_150)]"
@@ -228,11 +240,25 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
         : tone === "hold"
           ? "text-[oklch(0.82_0.16_85)]"
           : "text-foreground";
+  const ringColor =
+    tone === "buy"
+      ? "ring-[oklch(0.72_0.18_150)]/60"
+      : tone === "sell"
+        ? "ring-[oklch(0.65_0.22_25)]/60"
+        : tone === "hold"
+          ? "ring-[oklch(0.75_0.16_85)]/60"
+          : "ring-primary/60";
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg border border-border bg-card p-4 text-left transition hover:bg-accent/30 ${
+        active ? `ring-2 ${ringColor}` : ""
+      }`}
+    >
       <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className={`mt-1 text-2xl font-bold ${toneColor}`}>{value}</div>
-    </div>
+    </button>
   );
 }
 
