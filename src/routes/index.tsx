@@ -150,7 +150,7 @@ function Index() {
               Aim. Act. Profit.
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Live prices for {quotes.length || "150+"} Indian equities across every sector with technical signals (SMA-20/50 & RSI-14) and the latest news for every stock. Tap a row to see headlines, or tap a stat card to filter. Educational prototype — not investment advice.
+              Daily signals on {quotes.length || "150+"} Indian equities. Buy/Sell/Hold computed from 8 indicators — SMA 20/50/200, MACD, RSI-14, Bollinger Bands, 52-week range, momentum & volume trend. Tap a row for the full breakdown and news. Educational prototype — not investment advice.
             </p>
           </div>
           <button
@@ -163,13 +163,26 @@ function Index() {
         </header>
 
         <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Tracked" value={quotes.length} active={filter === "ALL"} onClick={() => setFilter("ALL")} />
-          <StatCard label="Buy signals" value={counts.BUY} tone="buy" active={filter === "BUY"} onClick={() => setFilter("BUY")} />
-          <StatCard label="Sell signals" value={counts.SELL} tone="sell" active={filter === "SELL"} onClick={() => setFilter("SELL")} />
-          <StatCard label="Hold" value={counts.HOLD} tone="hold" active={filter === "HOLD"} onClick={() => setFilter("HOLD")} />
+          <StatCard label="Tracked" value={quotes.length} active={view === "ALL" && filter === "ALL"} onClick={() => { setView("ALL"); setFilter("ALL"); }} />
+          <StatCard label="Buy signals" value={counts.BUY} tone="buy" active={filter === "BUY"} onClick={() => { setView("ALL"); setFilter("BUY"); }} />
+          <StatCard label="Sell signals" value={counts.SELL} tone="sell" active={filter === "SELL"} onClick={() => { setView("ALL"); setFilter("SELL"); }} />
+          <StatCard label="Hold" value={counts.HOLD} tone="hold" active={filter === "HOLD"} onClick={() => { setView("ALL"); setFilter("HOLD"); }} />
         </section>
 
         <div className="mb-3 flex flex-wrap items-center gap-3">
+          <div className="flex rounded-md border border-border bg-card p-1">
+            {(["ALL", "WATCHLIST"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`rounded px-3 py-1.5 text-xs font-semibold tracking-wider transition ${
+                  view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {v === "WATCHLIST" ? `★ Watchlist (${watchlist.length})` : "All stocks"}
+              </button>
+            ))}
+          </div>
           <div className="flex rounded-md border border-border bg-card p-1">
             {(["ALL", "BUY", "HOLD", "SELL"] as const).map((f) => (
               <button
@@ -234,19 +247,23 @@ function Index() {
                   q={q}
                   expanded={expanded === q.symbol}
                   onToggle={() => setExpanded(expanded === q.symbol ? null : q.symbol)}
+                  watched={isWatched(q.symbol)}
+                  onToggleWatch={() => toggle(q.symbol)}
                 />
               ))}
               {filtered.length === 0 && (
-                <li className="px-5 py-10 text-center text-sm text-muted-foreground">No matches.</li>
+                <li className="px-5 py-10 text-center text-sm text-muted-foreground">
+                  {view === "WATCHLIST" ? "Your watchlist is empty — tap the ★ on any stock to add it." : "No matches."}
+                </li>
               )}
             </ul>
           </div>
         )}
 
         <footer className="mt-8 text-center text-xs text-muted-foreground">
-          Quotes & news: Yahoo Finance (delayed). Auto-refresh 60s.
+          Quotes: Yahoo Finance (end-of-day). Signals computed daily from 8 technical indicators.
           {data?.fetchedAt && (
-            <> · Last update {new Date(data.fetchedAt).toLocaleTimeString("en-IN")}</>
+            <> · Last update {new Date(data.fetchedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</>
           )}
         </footer>
       </div>
