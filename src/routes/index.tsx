@@ -109,13 +109,13 @@ function Index() {
         <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Dalal Signal · NSE India · Nifty 50+
+              Arjun Signal · NSE India · All Sectors
             </div>
             <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
-              Buy. Sell. Hold.
+              Aim. Act. Profit.
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Live prices for {quotes.length || "50+"} Indian equities with technical signals (SMA-20/50 & RSI-14) and the latest news for every stock. Tap a row to see headlines. Educational prototype — not investment advice.
+              Live prices for {quotes.length || "150+"} Indian equities across every sector with technical signals (SMA-20/50 & RSI-14) and the latest news for every stock. Tap a row to see headlines, or tap a stat card to filter. Educational prototype — not investment advice.
             </p>
           </div>
           <button
@@ -128,10 +128,10 @@ function Index() {
         </header>
 
         <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Tracked" value={quotes.length} />
-          <StatCard label="Buy signals" value={counts.BUY} tone="buy" />
-          <StatCard label="Sell signals" value={counts.SELL} tone="sell" />
-          <StatCard label="Hold" value={counts.HOLD} tone="hold" />
+          <StatCard label="Tracked" value={quotes.length} active={filter === "ALL"} onClick={() => setFilter("ALL")} />
+          <StatCard label="Buy signals" value={counts.BUY} tone="buy" active={filter === "BUY"} onClick={() => setFilter("BUY")} />
+          <StatCard label="Sell signals" value={counts.SELL} tone="sell" active={filter === "SELL"} onClick={() => setFilter("SELL")} />
+          <StatCard label="Hold" value={counts.HOLD} tone="hold" active={filter === "HOLD"} onClick={() => setFilter("HOLD")} />
         </section>
 
         <div className="mb-3 flex flex-wrap items-center gap-3">
