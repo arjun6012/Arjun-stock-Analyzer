@@ -2,9 +2,17 @@ import { createServerFn } from "@tanstack/react-start";
 
 export type Signal = "BUY" | "SELL" | "HOLD";
 
+export interface NewsItem {
+  title: string;
+  link: string;
+  publisher: string;
+  publishedAt: number;
+}
+
 export interface StockQuote {
   symbol: string;
   name: string;
+  sector: string;
   price: number;
   previousClose: number;
   change: number;
@@ -15,11 +23,11 @@ export interface StockQuote {
   rsi: number;
   signal: Signal;
   reason: string;
-  // A naive "target sell price" — 5% above current or 52w high midpoint, whichever is higher
   suggestedSellPrice: number;
   suggestedBuyPrice: number;
   updatedAt: number;
 }
+
 
 const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   // Banking & Financials
