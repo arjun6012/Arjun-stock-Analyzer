@@ -807,7 +807,157 @@ function deriveSignal(
   return { signal, reasons, score, confidence, confluenceReasons, confidenceTier };
 }
 
-async function fetchOne(symbol: string, name: string, sector: string): Promise<StockQuote | null> {
+function smaSeries(values: number[], period: number): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < values.length; i++) {
+    if (i + 1 < period) {
+      out.push(NaN);
+    } else {
+      let s = 0;
+      for (let j = i + 1 - period; j <= i; j++) s += values[j];
+      out.push(s / period);
+    }
+  }
+  return out;
+}
+
+function rsiSeries(values: number[], period = 14): number[] {
+  const out: number[] = new Array(values.length).fill(NaN);
+  if (values.length < period + 1) return out;
+  let gain = 0;
+  let loss = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = values[i] - values[i - 1];
+    if (d >= 0) gain += d;
+    else loss -= d;
+  }
+  gain /= period;
+  loss /= period;
+  out[period] = loss === 0 ? 100 : 100 - 100 / (1 + gain / loss);
+  for (let i = period + 1; i < values.length; i++) {
+    const d = values[i] - values[i - 1];
+    const g = d > 0 ? d : 0;
+    const l = d < 0 ? -d : 0;
+    gain = (gain * (period - 1) + g) / period;
+    loss = (loss * (period - 1) + l) / period;
+    out[i] = loss === 0 ? 100 : 100 - 100 / (1 + gain / loss);
+  }
+  return out;
+}
+
+function buildStrategies(price: number, ind: Indicators): TradingStrategy[] {
+  const strategies: TradingStrategy[] = [];
+
+  // Trend Pullback
+  const trendPullback = ind.sma200 > 0 && price > ind.sma200 && (ind.rsi < 45 || price <= ind.sma20);
+  strategies.push({
+    id: "trend-pullback",
+    name: "Trend Pullback (Buy the Dip)",
+    style: "Swing",
+    bias: "BULLISH",
+    triggered: trendPullback,
+    description: "Long-term uptrend (Price > SMA200) with a short-term oversold dip into SMA20.",
+    entry: `Buy near ${ind.sma20.toFixed(2)} (SMA20) on RSI bounce above 50`,
+    exit: `Target SMA50 zone; stop below ${ind.sma200.toFixed(2)}`,
+  });
+
+  // EMA Ribbon Momentum
+  const ribbon = ind.ema9 > ind.ema21 && ind.ema21 > ind.ema55 && ind.volumeRatio > 1.2;
+  strategies.push({
+    id: "ema-ribbon",
+    name: "EMA Ribbon Momentum",
+    style: "Momentum",
+    bias: "BULLISH",
+    triggered: ribbon,
+    description: "EMAs 9/21/55 stacked bullishly with volume expansion — classic ride-the-trend setup.",
+    entry: `Add on pullbacks to EMA21 (${ind.ema21.toFixed(2)})`,
+    exit: "Exit on close below EMA21 or bearish MACD cross",
+  });
+
+  // Bollinger Mean Reversion
+  const meanReversion = ind.bbPct <= 0.1 && ind.rsi < 35;
+  strategies.push({
+    id: "bb-mean-reversion",
+    name: "Bollinger Mean Reversion",
+    style: "Mean Reversion",
+    bias: "BULLISH",
+    triggered: meanReversion,
+    description: "Price tagged the lower Bollinger band while RSI is oversold — high-probability bounce.",
+    entry: `Buy near ${ind.bbLower.toFixed(2)} (lower band)`,
+    exit: `Target Bollinger mid ${ind.bbMid.toFixed(2)}; stop 2% below band`,
+  });
+
+  // Volatility Squeeze Breakout
+  const squeeze = ind.bbWidth < 0.08;
+  const squeezeBull = squeeze && (ind.macdCross === "BULLISH" || ind.macdHist > 0);
+  strategies.push({
+    id: "squeeze-breakout",
+    name: "Volatility Squeeze Breakout",
+    style: "Breakout",
+    bias: squeeze ? (ind.macdHist >= 0 ? "BULLISH" : "BEARISH") : "NEUTRAL",
+    triggered: squeezeBull || (squeeze && ind.macdHist < 0),
+    description: "Bollinger band width compressed — energy building for a directional move.",
+    entry: `Buy break above ${ind.bbUpper.toFixed(2)}; short break below ${ind.bbLower.toFixed(2)}`,
+    exit: "Trail stop along EMA9; ride breakout until momentum stalls",
+  });
+
+  // Golden / Death Cross
+  const golden = ind.sma50 > ind.sma200 && Math.abs(ind.sma50 - ind.sma200) / ind.sma200 < 0.02;
+  strategies.push({
+    id: "golden-cross",
+    name: "Golden Cross Setup",
+    style: "Positional",
+    bias: "BULLISH",
+    triggered: golden,
+    description: "SMA50 crossing/just above SMA200 — long-term trend reversal signal.",
+    entry: `Accumulate near SMA50 (${ind.sma50.toFixed(2)})`,
+    exit: `Hold while SMA50 stays above SMA200`,
+  });
+
+  // Pivot Intraday
+  const pivotBuy = price > ind.pivotPP && price < ind.pivotR1;
+  strategies.push({
+    id: "pivot-intraday",
+    name: "Pivot Intraday Long",
+    style: "Intraday",
+    bias: "BULLISH",
+    triggered: pivotBuy,
+    description: "Price holding above daily Pivot Point — bullish intraday bias toward R1.",
+    entry: `Buy above PP ${ind.pivotPP.toFixed(2)}`,
+    exit: `Target R1 ${ind.pivotR1.toFixed(2)}; stop below S1 ${ind.pivotS1.toFixed(2)}`,
+  });
+
+  // Fibonacci Bounce
+  const fibBounce =
+    Math.abs(price - ind.fib618) / ind.fib618 <= 0.025 && price >= ind.fib618;
+  strategies.push({
+    id: "fib-bounce",
+    name: "Golden Fibonacci Bounce",
+    style: "Swing",
+    bias: "BULLISH",
+    triggered: fibBounce,
+    description: "Price holding the 61.8% Fibonacci retracement — high-conviction reversal zone.",
+    entry: `Buy near 61.8% Fib ${ind.fib618.toFixed(2)}`,
+    exit: `Target 38.2% Fib ${ind.fib382.toFixed(2)}; stop below 78.6%`,
+  });
+
+  // Sell the Rip
+  const sellRip = ind.sma200 > 0 && price < ind.sma200 && (ind.rsi > 58 || price >= ind.sma20);
+  strategies.push({
+    id: "sell-rip",
+    name: "Sell the Rip (Bearish)",
+    style: "Swing",
+    bias: "BEARISH",
+    triggered: sellRip,
+    description: "Long-term downtrend (Price < SMA200) with a short-term overbought bounce.",
+    entry: `Short near SMA20 ${ind.sma20.toFixed(2)} on RSI rejection at 60`,
+    exit: `Target SMA50; stop above ${ind.sma200.toFixed(2)}`,
+  });
+
+  return strategies;
+}
+
+
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1y`;
     const res = await fetch(url, {
