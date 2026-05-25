@@ -189,7 +189,7 @@ function Index() {
           </button>
         </header>
 
-        <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sb-fade-up" style={{ animationDelay: "0.1s" }}>
           <StatCard
             label="Tracked"
             value={quotes.length}
