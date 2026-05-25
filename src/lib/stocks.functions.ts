@@ -1120,6 +1120,24 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const target1 = Math.max(price * 1.05, pivotR1, fib382);
     const target2 = Math.max(target1 * 1.05, pivotR2, week52High);
 
+    // Build chart history (last ~120 days for graphs)
+    const HISTORY_LEN = 120;
+    const sma20Full = smaSeries(closes, 20);
+    const sma50Full = smaSeries(closes, 50);
+    const rsiFull = rsiSeries(closes, 14);
+    const sliceTail = <T,>(arr: T[]) => arr.slice(-HISTORY_LEN);
+    const history = {
+      closes: sliceTail(closes),
+      highs: sliceTail(highs),
+      lows: sliceTail(lows),
+      volumes: sliceTail(volumes),
+      sma20: sliceTail(sma20Full),
+      sma50: sliceTail(sma50Full),
+      rsi: sliceTail(rsiFull),
+    };
+
+    const strategies = buildStrategies(price, indicators);
+
     return {
       symbol,
       name,
@@ -1145,6 +1163,8 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       target1,
       target2,
       stopLoss,
+      history,
+      strategies,
     };
   } catch (e) {
     console.error("fetchOne failed", symbol, e);
