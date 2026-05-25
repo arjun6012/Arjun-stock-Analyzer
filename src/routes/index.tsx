@@ -802,7 +802,7 @@ function NewsPanel({ symbol, name }: { symbol: string; name: string }) {
   });
 
   return (
-    <div className="border-t border-border bg-background/40 px-5 py-4">
+    <div className="border-t border-border bg-background/40 px-5 py-4 sb-fade-in">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Latest news
       </div>
