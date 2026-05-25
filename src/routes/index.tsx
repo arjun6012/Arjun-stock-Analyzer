@@ -12,16 +12,33 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Arjun Signal — Indian Stocks Buy/Sell/Hold + Live News" },
+      { title: "Stox Buddy — Indian Stocks Technical Analysis & Buy/Sell Signals" },
       {
         name: "description",
         content:
-          "Live NSE stock prices across every Indian sector with technical buy/sell/hold signals from SMA & RSI, plus the latest news headlines for every stock.",
+          "Stox Buddy: deep technical analysis on 200+ NSE stocks across every Indian sector. SMA, MACD, RSI, ADX, MFI, Bollinger, Fibonacci & Pivot levels with clear buy/sell/hold signals.",
       },
     ],
   }),
   component: Index,
 });
+
+function StoxBuddyLogo({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`relative inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[oklch(0.72_0.17_255)] via-[oklch(0.78_0.18_150)] to-[oklch(0.82_0.16_85)] shadow-lg shadow-[oklch(0.72_0.17_255)]/30 ${className}`}
+      aria-hidden
+    >
+      <svg viewBox="0 0 32 32" className="h-6 w-6 text-background" fill="none">
+        <rect x="5"  y="14" width="3" height="10" rx="1" fill="currentColor" className="sb-logo-bar" style={{ animationDelay: "0s" }} />
+        <rect x="11" y="9"  width="3" height="15" rx="1" fill="currentColor" className="sb-logo-bar" style={{ animationDelay: "0.3s" }} />
+        <rect x="17" y="5"  width="3" height="19" rx="1" fill="currentColor" className="sb-logo-bar" style={{ animationDelay: "0.6s" }} />
+        <path d="M24 8 L28 4 M28 4 L28 8 M28 4 L24 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[oklch(0.78_0.18_150)] sb-pulse-ring" />
+    </span>
+  );
+}
 
 function formatINR(n: number) {
   return new Intl.NumberFormat("en-IN", {
