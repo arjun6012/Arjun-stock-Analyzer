@@ -399,12 +399,14 @@ function StatCard({
 
 function StockRow({
   q,
+  index,
   expanded,
   onToggle,
   watched,
   onToggleWatch,
 }: {
   q: StockQuote;
+  index: number;
   expanded: boolean;
   onToggle: () => void;
   watched: boolean;
@@ -412,8 +414,12 @@ function StockRow({
 }) {
   const up = q.change >= 0;
   return (
-    <li>
-      <div className="grid w-full grid-cols-12 items-center gap-4 px-5 py-4 transition hover:bg-accent/30">
+    <li
+      className="sb-fade-up"
+      style={{ animationDelay: `${Math.min(index, 20) * 0.02}s` }}
+    >
+      <div className="grid w-full grid-cols-12 items-center gap-4 px-5 py-4 transition hover:bg-accent/30 hover:translate-x-0.5 duration-200">
+
         <div className="col-span-12 md:col-span-3 flex items-start gap-2">
           <button
             type="button"
