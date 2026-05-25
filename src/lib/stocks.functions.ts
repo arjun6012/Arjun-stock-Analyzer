@@ -73,6 +73,29 @@ export interface StockQuote {
   ema21: number;
   ema55: number;
   bbWidth: number;
+  // Chart history (most recent ~120 trading days)
+  history: {
+    closes: number[];
+    highs: number[];
+    lows: number[];
+    volumes: number[];
+    sma20: number[];
+    sma50: number[];
+    rsi: number[];
+  };
+  // Strategy signals applicable to this stock
+  strategies: TradingStrategy[];
+}
+
+export interface TradingStrategy {
+  id: string;
+  name: string;
+  style: "Swing" | "Positional" | "Intraday" | "Momentum" | "Mean Reversion" | "Breakout";
+  bias: "BULLISH" | "BEARISH" | "NEUTRAL";
+  triggered: boolean;
+  description: string;
+  entry: string;
+  exit: string;
 }
 
 const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
