@@ -7,6 +7,7 @@ import {
   getStockNews,
   type Signal,
   type StockQuote,
+  type TradingStrategy,
 } from "@/lib/stocks.functions";
 
 export const Route = createFileRoute("/")({
