@@ -600,6 +600,23 @@ function IndicatorPanel({ q }: { q: StockQuote }) {
         <div className="text-xs text-muted-foreground">Calculated on 250+ days end-of-day data</div>
       </div>
 
+      {/* Charts area — price + volume + RSI */}
+      <div className="mb-6 grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <PriceChart q={q} />
+        </div>
+        <div className="grid gap-4">
+          <RSIChart q={q} />
+          <VolumeChart q={q} />
+        </div>
+      </div>
+
+      {/* Strategy Playbook */}
+      <div className="mb-6">
+        <StrategyPlaybook strategies={q.strategies} />
+      </div>
+
+
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left Column: Trade Action Plan (glassmorphism dashboard card) */}
         <div className="lg:col-span-5 flex flex-col gap-4">
