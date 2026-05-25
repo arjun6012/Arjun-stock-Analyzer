@@ -160,25 +160,30 @@ function Index() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Arjun Signal · NSE India · All Sectors
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4 sb-fade-up">
+          <div className="flex items-start gap-4">
+            <StoxBuddyLogo className="mt-1" />
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                NSE India · All Sectors · Technical Analysis
+              </div>
+              <h1 className="mt-1 text-4xl font-bold tracking-tight sm:text-5xl">
+                <span className="sb-gradient-text">Stox Buddy</span>
+              </h1>
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+                Your friendly stock companion. Daily signals on{" "}
+                <span className="text-foreground font-semibold">{quotes.length || "200+"}</span>{" "}
+                Indian equities — from Tata Motors PV &amp; CV plays to IT, pharma, defence and EV
+                ecosystem. Tap any row for full technical analysis: SMA, MACD, RSI, ADX, MFI,
+                Bollinger Bands, Fibonacci &amp; Pivot levels, plus live news. Educational
+                prototype — not investment advice.
+              </p>
             </div>
-            <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
-              Aim. Act. Profit.
-            </h1>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Daily signals on {quotes.length || "150+"} Indian equities. Buy/Sell/Hold computed
-              from 8 indicators — SMA 20/50/200, MACD, RSI-14, Bollinger Bands, 52-week range,
-              momentum & volume trend. Tap a row for the full breakdown and news. Educational
-              prototype — not investment advice.
-            </p>
           </div>
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
+            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium transition hover:bg-accent sb-hover-lift disabled:opacity-50"
           >
             {isFetching ? "Refreshing…" : "Refresh"}
           </button>
