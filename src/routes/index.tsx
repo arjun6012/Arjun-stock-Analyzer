@@ -297,7 +297,7 @@ function Index() {
             ))}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <div className="overflow-hidden rounded-xl border border-border bg-card sb-fade-up" style={{ animationDelay: "0.2s" }}>
             <div className="hidden grid-cols-12 gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:grid">
               <div className="col-span-3">Stock</div>
               <div className="col-span-2 text-right">Price</div>
@@ -307,10 +307,11 @@ function Index() {
               <div className="col-span-2 text-right">Signal</div>
             </div>
             <ul className="divide-y divide-border">
-              {filtered.map((q) => (
+              {filtered.map((q, i) => (
                 <StockRow
                   key={q.symbol}
                   q={q}
+                  index={i}
                   expanded={expanded === q.symbol}
                   onToggle={() => setExpanded(expanded === q.symbol ? null : q.symbol)}
                   watched={isWatched(q.symbol)}
@@ -328,18 +329,25 @@ function Index() {
           </div>
         )}
 
-        <footer className="mt-8 text-center text-xs text-muted-foreground">
-          Quotes: Yahoo Finance (end-of-day). Signals computed daily from 8 technical indicators.
-          {data?.fetchedAt && (
-            <>
-              {" "}
-              · Last update{" "}
-              {new Date(data.fetchedAt).toLocaleString("en-IN", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
-            </>
-          )}
+        <footer className="mt-8 flex flex-col items-center gap-2 text-center text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <StoxBuddyLogo className="h-6 w-6 rounded-lg [&_svg]:h-3.5 [&_svg]:w-3.5" />
+            <span className="font-semibold text-foreground">Stox Buddy</span>
+          </div>
+          <div>
+            Quotes: Yahoo Finance (end-of-day). Signals computed daily from a multi-indicator
+            confluence engine.
+            {data?.fetchedAt && (
+              <>
+                {" "}
+                · Last update{" "}
+                {new Date(data.fetchedAt).toLocaleString("en-IN", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </>
+            )}
+          </div>
         </footer>
       </div>
     </main>
