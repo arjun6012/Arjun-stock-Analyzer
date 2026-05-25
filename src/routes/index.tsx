@@ -12,16 +12,33 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Arjun Signal — Indian Stocks Buy/Sell/Hold + Live News" },
+      { title: "Stox Buddy — Indian Stocks Technical Analysis & Buy/Sell Signals" },
       {
         name: "description",
         content:
-          "Live NSE stock prices across every Indian sector with technical buy/sell/hold signals from SMA & RSI, plus the latest news headlines for every stock.",
+          "Stox Buddy: deep technical analysis on 200+ NSE stocks across every Indian sector. SMA, MACD, RSI, ADX, MFI, Bollinger, Fibonacci & Pivot levels with clear buy/sell/hold signals.",
       },
     ],
   }),
   component: Index,
 });
+
+function StoxBuddyLogo({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`relative inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[oklch(0.72_0.17_255)] via-[oklch(0.78_0.18_150)] to-[oklch(0.82_0.16_85)] shadow-lg shadow-[oklch(0.72_0.17_255)]/30 ${className}`}
+      aria-hidden
+    >
+      <svg viewBox="0 0 32 32" className="h-6 w-6 text-background" fill="none">
+        <rect x="5"  y="14" width="3" height="10" rx="1" fill="currentColor" className="sb-logo-bar" style={{ animationDelay: "0s" }} />
+        <rect x="11" y="9"  width="3" height="15" rx="1" fill="currentColor" className="sb-logo-bar" style={{ animationDelay: "0.3s" }} />
+        <rect x="17" y="5"  width="3" height="19" rx="1" fill="currentColor" className="sb-logo-bar" style={{ animationDelay: "0.6s" }} />
+        <path d="M24 8 L28 4 M28 4 L28 8 M28 4 L24 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[oklch(0.78_0.18_150)] sb-pulse-ring" />
+    </span>
+  );
+}
 
 function formatINR(n: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -143,31 +160,36 @@ function Index() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Arjun Signal · NSE India · All Sectors
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4 sb-fade-up">
+          <div className="flex items-start gap-4">
+            <StoxBuddyLogo className="mt-1" />
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                NSE India · All Sectors · Technical Analysis
+              </div>
+              <h1 className="mt-1 text-4xl font-bold tracking-tight sm:text-5xl">
+                <span className="sb-gradient-text">Stox Buddy</span>
+              </h1>
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+                Your friendly stock companion. Daily signals on{" "}
+                <span className="text-foreground font-semibold">{quotes.length || "200+"}</span>{" "}
+                Indian equities — from Tata Motors PV &amp; CV plays to IT, pharma, defence and EV
+                ecosystem. Tap any row for full technical analysis: SMA, MACD, RSI, ADX, MFI,
+                Bollinger Bands, Fibonacci &amp; Pivot levels, plus live news. Educational
+                prototype — not investment advice.
+              </p>
             </div>
-            <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
-              Aim. Act. Profit.
-            </h1>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Daily signals on {quotes.length || "150+"} Indian equities. Buy/Sell/Hold computed
-              from 8 indicators — SMA 20/50/200, MACD, RSI-14, Bollinger Bands, 52-week range,
-              momentum & volume trend. Tap a row for the full breakdown and news. Educational
-              prototype — not investment advice.
-            </p>
           </div>
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
+            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium transition hover:bg-accent sb-hover-lift disabled:opacity-50"
           >
             {isFetching ? "Refreshing…" : "Refresh"}
           </button>
         </header>
 
-        <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sb-fade-up" style={{ animationDelay: "0.1s" }}>
           <StatCard
             label="Tracked"
             value={quotes.length}
@@ -275,7 +297,7 @@ function Index() {
             ))}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <div className="overflow-hidden rounded-xl border border-border bg-card sb-fade-up" style={{ animationDelay: "0.2s" }}>
             <div className="hidden grid-cols-12 gap-4 border-b border-border bg-muted/30 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:grid">
               <div className="col-span-3">Stock</div>
               <div className="col-span-2 text-right">Price</div>
@@ -285,10 +307,11 @@ function Index() {
               <div className="col-span-2 text-right">Signal</div>
             </div>
             <ul className="divide-y divide-border">
-              {filtered.map((q) => (
+              {filtered.map((q, i) => (
                 <StockRow
                   key={q.symbol}
                   q={q}
+                  index={i}
                   expanded={expanded === q.symbol}
                   onToggle={() => setExpanded(expanded === q.symbol ? null : q.symbol)}
                   watched={isWatched(q.symbol)}
@@ -306,18 +329,25 @@ function Index() {
           </div>
         )}
 
-        <footer className="mt-8 text-center text-xs text-muted-foreground">
-          Quotes: Yahoo Finance (end-of-day). Signals computed daily from 8 technical indicators.
-          {data?.fetchedAt && (
-            <>
-              {" "}
-              · Last update{" "}
-              {new Date(data.fetchedAt).toLocaleString("en-IN", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
-            </>
-          )}
+        <footer className="mt-8 flex flex-col items-center gap-2 text-center text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <StoxBuddyLogo className="h-6 w-6 rounded-lg [&_svg]:h-3.5 [&_svg]:w-3.5" />
+            <span className="font-semibold text-foreground">Stox Buddy</span>
+          </div>
+          <div>
+            Quotes: Yahoo Finance (end-of-day). Signals computed daily from a multi-indicator
+            confluence engine.
+            {data?.fetchedAt && (
+              <>
+                {" "}
+                · Last update{" "}
+                {new Date(data.fetchedAt).toLocaleString("en-IN", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </>
+            )}
+          </div>
         </footer>
       </div>
     </main>
@@ -369,12 +399,14 @@ function StatCard({
 
 function StockRow({
   q,
+  index,
   expanded,
   onToggle,
   watched,
   onToggleWatch,
 }: {
   q: StockQuote;
+  index: number;
   expanded: boolean;
   onToggle: () => void;
   watched: boolean;
@@ -382,8 +414,12 @@ function StockRow({
 }) {
   const up = q.change >= 0;
   return (
-    <li>
-      <div className="grid w-full grid-cols-12 items-center gap-4 px-5 py-4 transition hover:bg-accent/30">
+    <li
+      className="sb-fade-up"
+      style={{ animationDelay: `${Math.min(index, 20) * 0.02}s` }}
+    >
+      <div className="grid w-full grid-cols-12 items-center gap-4 px-5 py-4 transition hover:bg-accent/30 hover:translate-x-0.5 duration-200">
+
         <div className="col-span-12 md:col-span-3 flex items-start gap-2">
           <button
             type="button"
@@ -548,7 +584,7 @@ function IndicatorPanel({ q }: { q: StockQuote }) {
   };
 
   return (
-    <div className="border-t border-border bg-background/50 px-5 py-6">
+    <div className="border-t border-border bg-background/50 px-5 py-6 sb-fade-in">
       {/* Top Banner: Confidence & Meta */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-4">
         <div className="flex items-center gap-3">
@@ -766,7 +802,7 @@ function NewsPanel({ symbol, name }: { symbol: string; name: string }) {
   });
 
   return (
-    <div className="border-t border-border bg-background/40 px-5 py-4">
+    <div className="border-t border-border bg-background/40 px-5 py-4 sb-fade-in">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Latest news
       </div>

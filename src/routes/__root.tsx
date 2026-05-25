@@ -72,37 +72,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Arjun stock market" },
+      { title: "Stox Buddy — Indian Stock Signals & Technical Analysis" },
       {
         name: "description",
         content:
-          "Smart Stock Signal provides real-time Indian stock prices and actionable buy/sell/hold recommendations.",
+          "Stox Buddy: your friendly Indian stock companion. Live NSE prices, deep technical analysis, and clear buy/sell/hold signals across every sector.",
       },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Arjun stock market" },
+      { name: "author", content: "Stox Buddy" },
+      { property: "og:title", content: "Stox Buddy — Indian Stock Signals & Technical Analysis" },
       {
         property: "og:description",
         content:
-          "Smart Stock Signal provides real-time Indian stock prices and actionable buy/sell/hold recommendations.",
+          "Live NSE prices, deep technical analysis, and clear buy/sell/hold signals across every Indian sector.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Arjun stock market" },
+      { name: "twitter:title", content: "Stox Buddy — Indian Stock Signals" },
       {
         name: "twitter:description",
         content:
-          "Smart Stock Signal provides real-time Indian stock prices and actionable buy/sell/hold recommendations.",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d6698535-e006-42c3-a86e-13ea8c7a7e10/id-preview-b9fe77be--909035b7-ab36-44b9-a142-d6349167d8f5.lovable.app-1779620652010.png",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d6698535-e006-42c3-a86e-13ea8c7a7e10/id-preview-b9fe77be--909035b7-ab36-44b9-a142-d6349167d8f5.lovable.app-1779620652010.png",
+          "Your friendly Indian stock companion. Live prices, deep technical analysis, and clear signals.",
       },
     ],
     links: [

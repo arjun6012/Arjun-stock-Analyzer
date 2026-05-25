@@ -281,6 +281,63 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "OBEROIRLTY.NS", name: "Oberoi Realty", sector: "Real Estate" },
   { symbol: "PRESTIGE.NS", name: "Prestige Estates", sector: "Real Estate" },
   { symbol: "LODHA.NS", name: "Macrotech Developers (Lodha)", sector: "Real Estate" },
+  { symbol: "BRIGADE.NS", name: "Brigade Enterprises", sector: "Real Estate" },
+  { symbol: "SOBHA.NS", name: "Sobha Limited", sector: "Real Estate" },
+  { symbol: "PHOENIXLTD.NS", name: "Phoenix Mills", sector: "Real Estate" },
+  // Auto — passenger & commercial vehicle deep-dive
+  { symbol: "TATATECH.NS", name: "Tata Technologies (Auto Tech)", sector: "Auto" },
+  { symbol: "FORCEMOT.NS", name: "Force Motors (CV)", sector: "Auto" },
+  { symbol: "ESCORTS.NS", name: "Escorts Kubota (CV/Tractors)", sector: "Auto" },
+  { symbol: "VSTTILLERS.NS", name: "VST Tillers Tractors", sector: "Auto" },
+  { symbol: "OLECTRA.NS", name: "Olectra Greentech (Electric Bus)", sector: "Auto" },
+  { symbol: "JBMA.NS", name: "JBM Auto (E-Bus)", sector: "Auto" },
+  { symbol: "ENDURANCE.NS", name: "Endurance Technologies", sector: "Auto" },
+  { symbol: "BHARATFORG.NS", name: "Bharat Forge", sector: "Auto" },
+  { symbol: "SCHAEFFLER.NS", name: "Schaeffler India", sector: "Auto" },
+  { symbol: "TIINDIA.NS", name: "Tube Investments of India", sector: "Auto" },
+  { symbol: "MINDACORP.NS", name: "Minda Corporation", sector: "Auto" },
+  { symbol: "GREAVESCOT.NS", name: "Greaves Cotton (E-Mobility)", sector: "Auto" },
+  // Logistics
+  { symbol: "DELHIVERY.NS", name: "Delhivery", sector: "Logistics" },
+  { symbol: "BLUEDART.NS", name: "Blue Dart Express", sector: "Logistics" },
+  { symbol: "TCI.NS", name: "Transport Corp of India", sector: "Logistics" },
+  { symbol: "MAHLOG.NS", name: "Mahindra Logistics", sector: "Logistics" },
+  { symbol: "GATI.NS", name: "Gati", sector: "Logistics" },
+  // Hospitality & Travel
+  { symbol: "INDIGO.NS", name: "InterGlobe Aviation (IndiGo)", sector: "Aviation" },
+  { symbol: "SPICEJET.NS", name: "SpiceJet", sector: "Aviation" },
+  { symbol: "INDHOTEL.NS", name: "Indian Hotels (Taj)", sector: "Hospitality" },
+  { symbol: "EIHOTEL.NS", name: "EIH (Oberoi Hotels)", sector: "Hospitality" },
+  { symbol: "CHALET.NS", name: "Chalet Hotels", sector: "Hospitality" },
+  { symbol: "LEMONTREE.NS", name: "Lemon Tree Hotels", sector: "Hospitality" },
+  { symbol: "EASEMYTRIP.NS", name: "Easy Trip Planners", sector: "Travel" },
+  // Agri & Sugar
+  { symbol: "GODREJAGRO.NS", name: "Godrej Agrovet", sector: "Agri" },
+  { symbol: "BALRAMCHIN.NS", name: "Balrampur Chini Mills", sector: "Agri" },
+  { symbol: "BAJAJHIND.NS", name: "Bajaj Hindusthan Sugar", sector: "Agri" },
+  { symbol: "KAVERISEED.NS", name: "Kaveri Seed Company", sector: "Agri" },
+  // Specialty Chemicals
+  { symbol: "AARTIIND.NS", name: "Aarti Industries", sector: "Chemicals" },
+  { symbol: "NAVINFLUOR.NS", name: "Navin Fluorine International", sector: "Chemicals" },
+  { symbol: "PIIND.NS", name: "PI Industries", sector: "Chemicals" },
+  { symbol: "CLEAN.NS", name: "Clean Science & Technology", sector: "Chemicals" },
+  { symbol: "GUJFLUORO.NS", name: "Gujarat Fluorochemicals", sector: "Chemicals" },
+  // Renewable & EV Ecosystem
+  { symbol: "WAAREEENER.NS", name: "Waaree Energies (Solar)", sector: "Power" },
+  { symbol: "ACMESOLAR.NS", name: "ACME Solar Holdings", sector: "Power" },
+  { symbol: "INOXWIND.NS", name: "Inox Wind", sector: "Power" },
+  // More IT / SaaS / Tech
+  { symbol: "ZENSARTECH.NS", name: "Zensar Technologies", sector: "IT" },
+  { symbol: "NEWGEN.NS", name: "Newgen Software", sector: "IT" },
+  { symbol: "INTELLECT.NS", name: "Intellect Design Arena", sector: "IT" },
+  { symbol: "SONATSOFTW.NS", name: "Sonata Software", sector: "IT" },
+  { symbol: "MAPMYINDIA.NS", name: "C.E. Info Systems (MapmyIndia)", sector: "Tech" },
+  // Misc Mid-Caps frequently traded
+  { symbol: "HONAUT.NS", name: "Honeywell Automation India", sector: "Capital Goods" },
+  { symbol: "POLYCAB.NS", name: "Polycab India", sector: "Capital Goods" },
+  { symbol: "KEI.NS", name: "KEI Industries", sector: "Capital Goods" },
+  { symbol: "ABCAPITAL.NS", name: "Aditya Birla Capital", sector: "Financials" },
+  { symbol: "PEL.NS", name: "Piramal Enterprises", sector: "Financials" },
 ];
 
 function sma(values: number[], period: number): number {
