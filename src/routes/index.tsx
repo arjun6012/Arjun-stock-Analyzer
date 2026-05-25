@@ -7,6 +7,7 @@ import {
   getStockNews,
   type Signal,
   type StockQuote,
+  type TradingStrategy,
 } from "@/lib/stocks.functions";
 
 export const Route = createFileRoute("/")({
@@ -600,6 +601,23 @@ function IndicatorPanel({ q }: { q: StockQuote }) {
         <div className="text-xs text-muted-foreground">Calculated on 250+ days end-of-day data</div>
       </div>
 
+      {/* Charts area — price + volume + RSI */}
+      <div className="mb-6 grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <PriceChart q={q} />
+        </div>
+        <div className="grid gap-4">
+          <RSIChart q={q} />
+          <VolumeChart q={q} />
+        </div>
+      </div>
+
+      {/* Strategy Playbook */}
+      <div className="mb-6">
+        <StrategyPlaybook strategies={q.strategies} />
+      </div>
+
+
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left Column: Trade Action Plan (glassmorphism dashboard card) */}
         <div className="lg:col-span-5 flex flex-col gap-4">
@@ -838,6 +856,281 @@ function NewsPanel({ symbol, name }: { symbol: string; name: string }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// Chart components — pure SVG, no external library
+// ============================================================
+
+const GREEN = "oklch(0.78 0.18 150)";
+const RED = "oklch(0.75 0.22 25)";
+const YELLOW = "oklch(0.82 0.16 85)";
+const BLUE = "oklch(0.72 0.17 255)";
+
+function buildPath(values: number[], w: number, h: number, min: number, max: number) {
+  const range = max - min || 1;
+  const n = values.length;
+  if (n === 0) return "";
+  const step = w / Math.max(n - 1, 1);
+  let d = "";
+  let started = false;
+  for (let i = 0; i < n; i++) {
+    const v = values[i];
+    if (!Number.isFinite(v)) continue;
+    const x = i * step;
+    const y = h - ((v - min) / range) * h;
+    d += started ? ` L${x.toFixed(2)} ${y.toFixed(2)}` : `M${x.toFixed(2)} ${y.toFixed(2)}`;
+    started = true;
+  }
+  return d;
+}
+
+function PriceChart({ q }: { q: StockQuote }) {
+  const W = 600;
+  const H = 200;
+  const PAD = 8;
+  const { closes, sma20, sma50 } = q.history;
+  const finiteSma20 = sma20.filter((v) => Number.isFinite(v));
+  const finiteSma50 = sma50.filter((v) => Number.isFinite(v));
+  const allVals = [...closes, ...finiteSma20, ...finiteSma50];
+  const min = Math.min(...allVals);
+  const max = Math.max(...allVals);
+  const pricePath = buildPath(closes, W - PAD * 2, H - PAD * 2, min, max);
+  const sma20Path = buildPath(sma20, W - PAD * 2, H - PAD * 2, min, max);
+  const sma50Path = buildPath(sma50, W - PAD * 2, H - PAD * 2, min, max);
+  const areaPath = `${pricePath} L${W - PAD * 2} ${H - PAD * 2} L0 ${H - PAD * 2} Z`;
+  const trendUp = closes[closes.length - 1] >= closes[0];
+  const trendColor = trendUp ? GREEN : RED;
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            📈 Price Trend · 120 sessions
+          </h4>
+          <div className="mt-0.5 text-[10px] text-muted-foreground">
+            Close with SMA 20 / SMA 50 overlay
+          </div>
+        </div>
+        <div className="flex gap-3 text-[10px]">
+          <Legend color={trendColor} label="Close" />
+          <Legend color={BLUE} label="SMA 20" />
+          <Legend color={YELLOW} label="SMA 50" dashed />
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-48 w-full" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`grad-${q.symbol}`} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor={trendColor} stopOpacity="0.35" />
+            <stop offset="100%" stopColor={trendColor} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <g transform={`translate(${PAD},${PAD})`}>
+          {[0.25, 0.5, 0.75].map((t) => (
+            <line
+              key={t}
+              x1={0}
+              x2={W - PAD * 2}
+              y1={(H - PAD * 2) * t}
+              y2={(H - PAD * 2) * t}
+              stroke="currentColor"
+              strokeOpacity="0.08"
+              strokeDasharray="2 3"
+            />
+          ))}
+          <path d={areaPath} fill={`url(#grad-${q.symbol})`} />
+          <path d={sma50Path} stroke={YELLOW} strokeWidth="1.2" fill="none" strokeDasharray="3 3" opacity="0.85" />
+          <path d={sma20Path} stroke={BLUE} strokeWidth="1.4" fill="none" opacity="0.9" />
+          <path d={pricePath} stroke={trendColor} strokeWidth="1.8" fill="none" />
+        </g>
+      </svg>
+      <div className="mt-2 flex justify-between text-[10px] text-muted-foreground font-mono">
+        <span>Low {min.toFixed(2)}</span>
+        <span>
+          Range {(((max - min) / min) * 100).toFixed(1)}%
+        </span>
+        <span>High {max.toFixed(2)}</span>
+      </div>
+    </div>
+  );
+}
+
+function RSIChart({ q }: { q: StockQuote }) {
+  const W = 300;
+  const H = 90;
+  const PAD = 6;
+  const { rsi } = q.history;
+  const path = buildPath(rsi, W - PAD * 2, H - PAD * 2, 0, 100);
+  const yFor = (v: number) => PAD + (H - PAD * 2) * (1 - v / 100);
+  const latest = rsi[rsi.length - 1] ?? 50;
+  const color = latest < 30 ? GREEN : latest > 70 ? RED : YELLOW;
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/40 p-3">
+      <div className="mb-1 flex items-center justify-between">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          RSI (14)
+        </h4>
+        <span className="text-[10px] font-mono font-bold" style={{ color }}>
+          {latest.toFixed(1)}
+        </span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-20 w-full" preserveAspectRatio="none">
+        <rect
+          x={0}
+          y={yFor(70)}
+          width={W}
+          height={yFor(30) - yFor(70)}
+          fill="currentColor"
+          opacity="0.04"
+        />
+        <line x1={0} x2={W} y1={yFor(70)} y2={yFor(70)} stroke={RED} strokeOpacity="0.5" strokeDasharray="2 3" />
+        <line x1={0} x2={W} y1={yFor(30)} y2={yFor(30)} stroke={GREEN} strokeOpacity="0.5" strokeDasharray="2 3" />
+        <line x1={0} x2={W} y1={yFor(50)} y2={yFor(50)} stroke="currentColor" strokeOpacity="0.15" />
+        <g transform={`translate(${PAD},0)`}>
+          <path d={path} stroke={color} strokeWidth="1.4" fill="none" />
+        </g>
+      </svg>
+      <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
+        <span className="text-[oklch(0.78_0.18_150)]">30 Oversold</span>
+        <span className="text-[oklch(0.75_0.22_25)]">Overbought 70</span>
+      </div>
+    </div>
+  );
+}
+
+function VolumeChart({ q }: { q: StockQuote }) {
+  const W = 300;
+  const H = 70;
+  const PAD = 4;
+  const { volumes, closes } = q.history;
+  const max = Math.max(...volumes, 1);
+  const step = (W - PAD * 2) / Math.max(volumes.length, 1);
+  const bw = Math.max(step * 0.7, 1);
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/40 p-3">
+      <div className="mb-1 flex items-center justify-between">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          Volume
+        </h4>
+        <span className="text-[10px] font-mono text-muted-foreground">
+          {q.volumeRatio.toFixed(2)}× 5d/20d
+        </span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-16 w-full" preserveAspectRatio="none">
+        <g transform={`translate(${PAD},${PAD})`}>
+          {volumes.map((v, i) => {
+            const h = ((v || 0) / max) * (H - PAD * 2);
+            const x = i * step;
+            const up = i === 0 || closes[i] >= closes[i - 1];
+            return (
+              <rect
+                key={i}
+                x={x}
+                y={H - PAD * 2 - h}
+                width={bw}
+                height={h}
+                fill={up ? GREEN : RED}
+                opacity="0.55"
+              />
+            );
+          })}
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+function Legend({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
+  return (
+    <span className="flex items-center gap-1.5 text-muted-foreground">
+      <span
+        className="inline-block h-0.5 w-4"
+        style={{
+          background: dashed
+            ? `repeating-linear-gradient(90deg, ${color} 0 3px, transparent 3px 6px)`
+            : color,
+        }}
+      />
+      {label}
+    </span>
+  );
+}
+
+function StrategyPlaybook({ strategies }: { strategies: TradingStrategy[] }) {
+  const triggered = strategies.filter((s) => s.triggered);
+  const others = strategies.filter((s) => !s.triggered);
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          🧭 Trader Strategy Playbook
+        </h3>
+        <span className="text-[10px] text-muted-foreground font-mono">
+          {triggered.length} active · {strategies.length} total
+        </span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {[...triggered, ...others].map((s) => (
+          <StrategyCard key={s.id} s={s} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StrategyCard({ s }: { s: TradingStrategy }) {
+  const biasColor =
+    s.bias === "BULLISH"
+      ? "text-[oklch(0.78_0.18_150)] border-[oklch(0.72_0.18_150)]/40"
+      : s.bias === "BEARISH"
+        ? "text-[oklch(0.75_0.22_25)] border-[oklch(0.65_0.22_25)]/40"
+        : "text-muted-foreground border-border";
+  return (
+    <div
+      className={`rounded-lg border p-3 transition ${
+        s.triggered
+          ? "border-primary/40 bg-primary/5 shadow-[0_0_0_1px_oklch(0.72_0.17_255_/_0.15)]"
+          : "border-border/40 bg-card/30 opacity-70"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            {s.triggered && (
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[oklch(0.78_0.18_150)] animate-pulse" />
+            )}
+            <span className="text-xs font-bold text-foreground truncate">{s.name}</span>
+          </div>
+          <div className="mt-0.5 flex flex-wrap gap-1 text-[9px] font-mono uppercase tracking-wider">
+            <span className="rounded border border-border/60 px-1.5 py-0.5 text-muted-foreground">
+              {s.style}
+            </span>
+            <span className={`rounded border px-1.5 py-0.5 ${biasColor}`}>{s.bias}</span>
+            {s.triggered && (
+              <span className="rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-primary">
+                ACTIVE
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{s.description}</p>
+      <div className="mt-2 grid gap-1 text-[10px] font-mono">
+        <div className="flex gap-1.5">
+          <span className="text-[oklch(0.78_0.18_150)] font-bold">→</span>
+          <span className="text-muted-foreground">{s.entry}</span>
+        </div>
+        <div className="flex gap-1.5">
+          <span className="text-[oklch(0.75_0.22_25)] font-bold">←</span>
+          <span className="text-muted-foreground">{s.exit}</span>
+        </div>
+      </div>
     </div>
   );
 }
