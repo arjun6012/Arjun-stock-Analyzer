@@ -957,7 +957,7 @@ function buildStrategies(price: number, ind: Indicators): TradingStrategy[] {
   return strategies;
 }
 
-
+async function fetchOne(symbol: string, name: string, sector: string): Promise<StockQuote | null> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1y`;
     const res = await fetch(url, {
