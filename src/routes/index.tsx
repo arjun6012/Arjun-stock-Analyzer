@@ -584,7 +584,7 @@ function IndicatorPanel({ q }: { q: StockQuote }) {
   };
 
   return (
-    <div className="border-t border-border bg-background/50 px-5 py-6">
+    <div className="border-t border-border bg-background/50 px-5 py-6 sb-fade-in">
       {/* Top Banner: Confidence & Meta */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-4">
         <div className="flex items-center gap-3">
