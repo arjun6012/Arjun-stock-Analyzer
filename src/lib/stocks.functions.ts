@@ -9,6 +9,15 @@ export interface NewsItem {
   publishedAt: number;
 }
 
+export interface ROI {
+  m1: number;
+  m3: number;
+  m6: number;
+  y1: number;
+  y3: number;
+  y5: number;
+}
+
 export interface StockQuote {
   symbol: string;
   name: string;
@@ -30,24 +39,23 @@ export interface StockQuote {
   bbUpper: number;
   bbLower: number;
   bbMid: number;
-  bbPct: number; // 0..1 position within bands
+  bbPct: number;
   week52High: number;
   week52Low: number;
-  pctFrom52High: number; // negative = below high
+  pctFrom52High: number;
   pctFrom52Low: number;
-  momentum1m: number; // % over ~21 trading days
-  momentum3m: number; // % over ~63 trading days
+  momentum1m: number;
+  momentum3m: number;
   avgVolume20: number;
-  volumeRatio: number; // recent 5d avg / 20d avg
+  volumeRatio: number;
   signal: Signal;
-  confidence: number; // 0..100
+  confidence: number;
   score: number;
   reasons: string[];
   reason: string;
   suggestedSellPrice: number;
   suggestedBuyPrice: number;
   updatedAt: number;
-  // New indicators
   adx: number;
   adxTrend: "STRONG" | "WEAK" | "SIDEWAYS";
   mfi: number;
@@ -73,7 +81,7 @@ export interface StockQuote {
   ema21: number;
   ema55: number;
   bbWidth: number;
-  // Chart history (most recent ~120 trading days)
+  roi: ROI;
   history: {
     closes: number[];
     highs: number[];
@@ -83,9 +91,9 @@ export interface StockQuote {
     sma50: number[];
     rsi: number[];
   };
-  // Strategy signals applicable to this stock
   strategies: TradingStrategy[];
 }
+
 
 export interface TradingStrategy {
   id: string;
