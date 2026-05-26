@@ -994,6 +994,183 @@ function PriceChart({ q }: { q: StockQuote }) {
   );
 }
 
+type ChartRange = "1mo" | "6mo" | "1y" | "3y" | "5y";
+const RANGE_LABELS: { id: ChartRange; label: string }[] = [
+  { id: "1mo", label: "1M" },
+  { id: "6mo", label: "6M" },
+  { id: "1y", label: "1Y" },
+  { id: "3y", label: "3Y" },
+  { id: "5y", label: "5Y" },
+];
+
+function ExpandableChart({ q }: { q: StockQuote }) {
+  const [range, setRange] = useState<ChartRange>("1y");
+  const fetchHistory = useServerFn(getStockHistory);
+  const { data, isFetching } = useQuery({
+    queryKey: ["history", q.symbol, range],
+    queryFn: () => fetchHistory({ data: { symbol: q.symbol, range } }),
+    staleTime: 1000 * 60 * 60, // 1h
+  });
+
+  // Fallback to embedded 120-day history for the very first paint of "1y"
+  const points: { c: number; t: number }[] =
+    data?.points && data.points.length > 0
+      ? data.points
+      : q.history.closes.map((c, i) => ({ c, t: i }));
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            📈 Price History · {RANGE_LABELS.find((r) => r.id === range)?.label}
+          </h4>
+          <div className="mt-0.5 text-[10px] text-muted-foreground">
+            {points.length} data points{isFetching ? " · loading…" : ""}
+          </div>
+        </div>
+        <div className="flex gap-1 rounded-md border border-border/60 bg-background/40 p-0.5">
+          {RANGE_LABELS.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => setRange(r.id)}
+              className={`rounded px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider transition ${
+                range === r.id
+                  ? "bg-[oklch(0.72_0.17_255)]/25 text-[oklch(0.82_0.16_255)]"
+                  : "text-muted-foreground hover:bg-muted/40"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <ChartCanvas
+        closes={points.map((p) => p.c)}
+        timestamps={points.map((p) => p.t)}
+        symbol={`${q.symbol}-${range}`}
+      />
+    </div>
+  );
+}
+
+function ChartCanvas({
+  closes,
+  timestamps,
+  symbol,
+}: {
+  closes: number[];
+  timestamps: number[];
+  symbol: string;
+}) {
+  const W = 600;
+  const H = 220;
+  const PAD = 8;
+  if (closes.length < 2) {
+    return (
+      <div className="flex h-48 items-center justify-center text-xs text-muted-foreground">
+        No history data
+      </div>
+    );
+  }
+  const min = Math.min(...closes);
+  const max = Math.max(...closes);
+  const path = buildPath(closes, W - PAD * 2, H - PAD * 2, min, max);
+  const areaPath = `${path} L${W - PAD * 2} ${H - PAD * 2} L0 ${H - PAD * 2} Z`;
+  const trendUp = closes[closes.length - 1] >= closes[0];
+  const trendColor = trendUp ? GREEN : RED;
+  const change = ((closes[closes.length - 1] - closes[0]) / closes[0]) * 100;
+
+  const firstTs = timestamps[0];
+  const lastTs = timestamps[timestamps.length - 1];
+  const fmt = (t: number) => {
+    if (!t || t < 1e9) return "";
+    const d = new Date(t);
+    return d.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+  };
+
+  return (
+    <>
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-56 w-full" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`grad-${symbol}`} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor={trendColor} stopOpacity="0.35" />
+            <stop offset="100%" stopColor={trendColor} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <g transform={`translate(${PAD},${PAD})`}>
+          {[0.25, 0.5, 0.75].map((t) => (
+            <line
+              key={t}
+              x1={0}
+              x2={W - PAD * 2}
+              y1={(H - PAD * 2) * t}
+              y2={(H - PAD * 2) * t}
+              stroke="currentColor"
+              strokeOpacity="0.08"
+              strokeDasharray="2 3"
+            />
+          ))}
+          <path d={areaPath} fill={`url(#grad-${symbol})`} />
+          <path d={path} stroke={trendColor} strokeWidth="1.8" fill="none" />
+        </g>
+      </svg>
+      <div className="mt-2 flex justify-between text-[10px] text-muted-foreground font-mono">
+        <span>{fmt(firstTs)} · Low {min.toFixed(2)}</span>
+        <span style={{ color: trendColor }}>
+          {trendUp ? "▲" : "▼"} {change >= 0 ? "+" : ""}{change.toFixed(2)}% range
+        </span>
+        <span>{fmt(lastTs)} · High {max.toFixed(2)}</span>
+      </div>
+    </>
+  );
+}
+
+function RoiPanel({ q }: { q: StockQuote }) {
+  const entries: { label: string; value: number; period: string }[] = [
+    { label: "1 Month", value: q.roi.m1, period: "21d" },
+    { label: "3 Months", value: q.roi.m3, period: "63d" },
+    { label: "6 Months", value: q.roi.m6, period: "126d" },
+    { label: "1 Year", value: q.roi.y1, period: "252d" },
+    { label: "3 Years", value: q.roi.y3, period: "756d" },
+    { label: "5 Years", value: q.roi.y5, period: "1260d" },
+  ];
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          💰 Return on Investment
+        </h4>
+        <span className="text-[10px] text-muted-foreground">
+          If you'd bought {formatINR(q.price)} of this stock then…
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+        {entries.map((e) => {
+          const valid = Number.isFinite(e.value) && e.value !== 0;
+          const up = valid && e.value >= 0;
+          const color = !valid
+            ? "text-muted-foreground border-border/40 bg-muted/10"
+            : up
+              ? "text-[oklch(0.78_0.18_150)] border-[oklch(0.72_0.18_150)]/30 bg-[oklch(0.72_0.18_150)]/10"
+              : "text-[oklch(0.75_0.22_25)] border-[oklch(0.72_0.22_25)]/30 bg-[oklch(0.72_0.22_25)]/10";
+          return (
+            <div key={e.label} className={`rounded-lg border p-2 ${color}`}>
+              <div className="text-[9px] uppercase tracking-wider opacity-70">{e.label}</div>
+              <div className="font-mono text-base font-bold">
+                {valid ? `${up ? "+" : ""}${e.value.toFixed(1)}%` : "—"}
+              </div>
+              <div className="text-[9px] opacity-60 font-mono">{e.period}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
 function RSIChart({ q }: { q: StockQuote }) {
   const W = 300;
   const H = 90;
