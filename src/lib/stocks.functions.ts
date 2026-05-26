@@ -1116,7 +1116,7 @@ function buildStrategies(price: number, ind: Indicators): TradingStrategy[] {
 
 async function fetchOne(symbol: string, name: string, sector: string): Promise<StockQuote | null> {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1y`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5y`;
     const res = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; LovableStocks/1.0)",
@@ -1193,6 +1193,22 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const ago63 = closes[closes.length - 64] ?? closes[0];
     const momentum1m = ago21 ? ((price - ago21) / ago21) * 100 : 0;
     const momentum3m = ago63 ? ((price - ago63) / ago63) * 100 : 0;
+
+    // ROI over standard windows (using ~21 trading days/month)
+    const roiAt = (daysAgo: number): number => {
+      const idx = closes.length - 1 - daysAgo;
+      if (idx < 0) return 0;
+      const base = closes[idx];
+      return base ? ((price - base) / base) * 100 : 0;
+    };
+    const roi: ROI = {
+      m1: roiAt(21),
+      m3: roiAt(63),
+      m6: roiAt(126),
+      y1: roiAt(252),
+      y3: roiAt(252 * 3),
+      y5: roiAt(252 * 5),
+    };
 
     const recent5 = volumes.slice(-5);
     const recent20 = volumes.slice(-20);
@@ -1322,6 +1338,7 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       stopLoss,
       history,
       strategies,
+      roi,
     };
   } catch (e) {
     console.error("fetchOne failed", symbol, e);
@@ -1329,13 +1346,87 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
   }
 }
 
+// Concurrency-limited batch runner. Yahoo Finance throttles aggressively
+// past ~30 parallel requests — without this, ~30% of rows come back null.
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const i = cursor++;
+      if (i >= items.length) return;
+      out[i] = await fn(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
 export const getIndianStocks = createServerFn({ method: "GET" }).handler(async () => {
-  const results = await Promise.all(
-    DEFAULT_TICKERS.map((t) => fetchOne(t.symbol, t.name, t.sector)),
+  const results = await mapWithConcurrency(DEFAULT_TICKERS, 10, (t) =>
+    fetchOne(t.symbol, t.name, t.sector),
   );
   const quotes = results.filter((q): q is StockQuote => q !== null);
   return { quotes, fetchedAt: Date.now() };
 });
+
+export interface HistoryPoint {
+  t: number; // timestamp (ms)
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+}
+
+export const getStockHistory = createServerFn({ method: "GET" })
+  .inputValidator((data: { symbol: string; range: "1mo" | "6mo" | "1y" | "3y" | "5y" | "max" }) => data)
+  .handler(async ({ data }): Promise<{ points: HistoryPoint[] }> => {
+    try {
+      const interval =
+        data.range === "1mo" ? "1d" : data.range === "6mo" || data.range === "1y" ? "1d" : "1wk";
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(data.symbol)}?interval=${interval}&range=${data.range}`;
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; LovableStocks/1.0)",
+          Accept: "application/json",
+        },
+      });
+      if (!res.ok) return { points: [] };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const json = (await res.json()) as any;
+      const result = json?.chart?.result?.[0];
+      if (!result) return { points: [] };
+      const ts: number[] = result.timestamp ?? [];
+      const q = result.indicators?.quote?.[0] ?? {};
+      const opens: (number | null)[] = q.open ?? [];
+      const highs: (number | null)[] = q.high ?? [];
+      const lows: (number | null)[] = q.low ?? [];
+      const closes: (number | null)[] = q.close ?? [];
+      const vols: (number | null)[] = q.volume ?? [];
+      const points: HistoryPoint[] = [];
+      for (let i = 0; i < ts.length; i++) {
+        const c = closes[i];
+        if (typeof c !== "number" || Number.isNaN(c)) continue;
+        points.push({
+          t: (ts[i] ?? 0) * 1000,
+          o: typeof opens[i] === "number" ? (opens[i] as number) : c,
+          h: typeof highs[i] === "number" ? (highs[i] as number) : c,
+          l: typeof lows[i] === "number" ? (lows[i] as number) : c,
+          c,
+          v: typeof vols[i] === "number" ? (vols[i] as number) : 0,
+        });
+      }
+      return { points };
+    } catch (e) {
+      console.error("getStockHistory failed", data.symbol, e);
+      return { points: [] };
+    }
+  });
 
 function decodeEntities(s: string): string {
   return s
