@@ -9,6 +9,15 @@ export interface NewsItem {
   publishedAt: number;
 }
 
+export interface ROI {
+  m1: number;
+  m3: number;
+  m6: number;
+  y1: number;
+  y3: number;
+  y5: number;
+}
+
 export interface StockQuote {
   symbol: string;
   name: string;
@@ -30,24 +39,23 @@ export interface StockQuote {
   bbUpper: number;
   bbLower: number;
   bbMid: number;
-  bbPct: number; // 0..1 position within bands
+  bbPct: number;
   week52High: number;
   week52Low: number;
-  pctFrom52High: number; // negative = below high
+  pctFrom52High: number;
   pctFrom52Low: number;
-  momentum1m: number; // % over ~21 trading days
-  momentum3m: number; // % over ~63 trading days
+  momentum1m: number;
+  momentum3m: number;
   avgVolume20: number;
-  volumeRatio: number; // recent 5d avg / 20d avg
+  volumeRatio: number;
   signal: Signal;
-  confidence: number; // 0..100
+  confidence: number;
   score: number;
   reasons: string[];
   reason: string;
   suggestedSellPrice: number;
   suggestedBuyPrice: number;
   updatedAt: number;
-  // New indicators
   adx: number;
   adxTrend: "STRONG" | "WEAK" | "SIDEWAYS";
   mfi: number;
@@ -73,7 +81,7 @@ export interface StockQuote {
   ema21: number;
   ema55: number;
   bbWidth: number;
-  // Chart history (most recent ~120 trading days)
+  roi: ROI;
   history: {
     closes: number[];
     highs: number[];
@@ -83,9 +91,9 @@ export interface StockQuote {
     sma50: number[];
     rsi: number[];
   };
-  // Strategy signals applicable to this stock
   strategies: TradingStrategy[];
 }
+
 
 export interface TradingStrategy {
   id: string;
@@ -361,7 +369,156 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "KEI.NS", name: "KEI Industries", sector: "Capital Goods" },
   { symbol: "ABCAPITAL.NS", name: "Aditya Birla Capital", sector: "Financials" },
   { symbol: "PEL.NS", name: "Piramal Enterprises", sector: "Financials" },
+  // ===== Extended NIFTY 500 coverage =====
+  // More Banking & Financials
+  { symbol: "INDIANB.NS", name: "Indian Bank", sector: "Banking" },
+  { symbol: "CENTRALBK.NS", name: "Central Bank of India", sector: "Banking" },
+  { symbol: "UCOBANK.NS", name: "UCO Bank", sector: "Banking" },
+  { symbol: "MAHABANK.NS", name: "Bank of Maharashtra", sector: "Banking" },
+  { symbol: "CSBBANK.NS", name: "CSB Bank", sector: "Banking" },
+  { symbol: "DCBBANK.NS", name: "DCB Bank", sector: "Banking" },
+  { symbol: "KARURVYSYA.NS", name: "Karur Vysya Bank", sector: "Banking" },
+  { symbol: "SOUTHBANK.NS", name: "South Indian Bank", sector: "Banking" },
+  { symbol: "TMB.NS", name: "Tamilnad Mercantile Bank", sector: "Banking" },
+  { symbol: "MANAPPURAM.NS", name: "Manappuram Finance", sector: "Financials" },
+  { symbol: "POONAWALLA.NS", name: "Poonawalla Fincorp", sector: "Financials" },
+  { symbol: "L&TFH.NS", name: "L&T Finance Holdings", sector: "Financials" },
+  { symbol: "SUNDARMFIN.NS", name: "Sundaram Finance", sector: "Financials" },
+  { symbol: "MFSL.NS", name: "Max Financial Services", sector: "Financials" },
+  { symbol: "IIFL.NS", name: "IIFL Finance", sector: "Financials" },
+  { symbol: "ANGELONE.NS", name: "Angel One", sector: "Financials" },
+  { symbol: "CDSL.NS", name: "Central Depository Services", sector: "Financials" },
+  { symbol: "MCX.NS", name: "Multi Commodity Exchange", sector: "Financials" },
+  { symbol: "KFINTECH.NS", name: "KFin Technologies", sector: "Financials" },
+  { symbol: "CAMS.NS", name: "Computer Age Management", sector: "Financials" },
+  { symbol: "NUVAMA.NS", name: "Nuvama Wealth Management", sector: "Financials" },
+  { symbol: "360ONE.NS", name: "360 ONE WAM", sector: "Financials" },
+  { symbol: "FIVESTAR.NS", name: "Five-Star Business Finance", sector: "Financials" },
+  { symbol: "AAVAS.NS", name: "Aavas Financiers", sector: "Financials" },
+  { symbol: "APTUS.NS", name: "Aptus Value Housing Finance", sector: "Financials" },
+  { symbol: "HOMEFIRST.NS", name: "Home First Finance", sector: "Financials" },
+  // More Pharma & Healthcare
+  { symbol: "ABBOTINDIA.NS", name: "Abbott India", sector: "Pharma" },
+  { symbol: "GLAXO.NS", name: "GlaxoSmithKline Pharma", sector: "Pharma" },
+  { symbol: "PFIZER.NS", name: "Pfizer India", sector: "Pharma" },
+  { symbol: "SANOFI.NS", name: "Sanofi India", sector: "Pharma" },
+  { symbol: "IPCALAB.NS", name: "Ipca Laboratories", sector: "Pharma" },
+  { symbol: "AJANTPHARM.NS", name: "Ajanta Pharma", sector: "Pharma" },
+  { symbol: "NATCOPHARM.NS", name: "Natco Pharma", sector: "Pharma" },
+  { symbol: "JBCHEPHARM.NS", name: "JB Chemicals", sector: "Pharma" },
+  { symbol: "ERIS.NS", name: "Eris Lifesciences", sector: "Pharma" },
+  { symbol: "GRANULES.NS", name: "Granules India", sector: "Pharma" },
+  { symbol: "LAURUSLABS.NS", name: "Laurus Labs", sector: "Pharma" },
+  { symbol: "SYNGENE.NS", name: "Syngene International", sector: "Pharma" },
+  { symbol: "PPLPHARMA.NS", name: "Piramal Pharma", sector: "Pharma" },
+  { symbol: "GLAND.NS", name: "Gland Pharma", sector: "Pharma" },
+  { symbol: "POLYMED.NS", name: "Poly Medicure", sector: "Healthcare" },
+  { symbol: "METROPOLIS.NS", name: "Metropolis Healthcare", sector: "Healthcare" },
+  { symbol: "LALPATHLAB.NS", name: "Dr Lal PathLabs", sector: "Healthcare" },
+  { symbol: "NH.NS", name: "Narayana Hrudayalaya", sector: "Healthcare" },
+  { symbol: "RAINBOW.NS", name: "Rainbow Children's Medicare", sector: "Healthcare" },
+  { symbol: "KIMS.NS", name: "Krishna Institute of Medical", sector: "Healthcare" },
+  { symbol: "MEDPLUS.NS", name: "Medplus Health Services", sector: "Healthcare" },
+  // More Capital Goods & Engineering
+  { symbol: "THERMAX.NS", name: "Thermax", sector: "Capital Goods" },
+  { symbol: "TIMKEN.NS", name: "Timken India", sector: "Capital Goods" },
+  { symbol: "SKFINDIA.NS", name: "SKF India", sector: "Capital Goods" },
+  { symbol: "GRINDWELL.NS", name: "Grindwell Norton", sector: "Capital Goods" },
+  { symbol: "CGPOWER.NS", name: "CG Power & Industrial", sector: "Capital Goods" },
+  { symbol: "TRITURBINE.NS", name: "Triveni Turbine", sector: "Capital Goods" },
+  { symbol: "ELGIEQUIP.NS", name: "Elgi Equipments", sector: "Capital Goods" },
+  { symbol: "APARINDS.NS", name: "Apar Industries", sector: "Capital Goods" },
+  { symbol: "FINCABLES.NS", name: "Finolex Cables", sector: "Capital Goods" },
+  { symbol: "RRKABEL.NS", name: "RR Kabel", sector: "Capital Goods" },
+  { symbol: "VGUARD.NS", name: "V-Guard Industries", sector: "Capital Goods" },
+  { symbol: "SUPREMEIND.NS", name: "Supreme Industries", sector: "Capital Goods" },
+  { symbol: "ASTRAL.NS", name: "Astral Limited", sector: "Capital Goods" },
+  { symbol: "PRINCEPIPE.NS", name: "Prince Pipes", sector: "Capital Goods" },
+  { symbol: "AIAENG.NS", name: "AIA Engineering", sector: "Capital Goods" },
+  { symbol: "KIRLOSENG.NS", name: "Kirloskar Oil Engines", sector: "Capital Goods" },
+  { symbol: "KIRLOSBROS.NS", name: "Kirloskar Brothers", sector: "Capital Goods" },
+  // More Chemicals & Specialty
+  { symbol: "ATUL.NS", name: "Atul Ltd", sector: "Chemicals" },
+  { symbol: "VINATIORGA.NS", name: "Vinati Organics", sector: "Chemicals" },
+  { symbol: "FINEORG.NS", name: "Fine Organic Industries", sector: "Chemicals" },
+  { symbol: "GHCL.NS", name: "GHCL", sector: "Chemicals" },
+  { symbol: "NOCIL.NS", name: "NOCIL", sector: "Chemicals" },
+  { symbol: "ALKYLAMINE.NS", name: "Alkyl Amines Chemicals", sector: "Chemicals" },
+  { symbol: "BALAMINES.NS", name: "Balaji Amines", sector: "Chemicals" },
+  { symbol: "ROSSARI.NS", name: "Rossari Biotech", sector: "Chemicals" },
+  { symbol: "GALAXYSURF.NS", name: "Galaxy Surfactants", sector: "Chemicals" },
+  { symbol: "ANURAS.NS", name: "Anupam Rasayan", sector: "Chemicals" },
+  { symbol: "CHEMPLASTS.NS", name: "Chemplast Sanmar", sector: "Chemicals" },
+  { symbol: "EPL.NS", name: "EPL (Essel Propack)", sector: "Chemicals" },
+  // More Consumer & Retail
+  { symbol: "JUBLFOOD.NS", name: "Jubilant FoodWorks", sector: "FMCG" },
+  { symbol: "DEVYANI.NS", name: "Devyani International (KFC/Pizza Hut)", sector: "FMCG" },
+  { symbol: "SAPPHIRE.NS", name: "Sapphire Foods (KFC)", sector: "FMCG" },
+  { symbol: "WESTLIFE.NS", name: "Westlife Foodworld (McDonald's)", sector: "FMCG" },
+  { symbol: "EMAMILTD.NS", name: "Emami", sector: "FMCG" },
+  { symbol: "RADICO.NS", name: "Radico Khaitan", sector: "FMCG" },
+  { symbol: "BIKAJI.NS", name: "Bikaji Foods International", sector: "FMCG" },
+  { symbol: "BBTC.NS", name: "Bombay Burmah Trading", sector: "FMCG" },
+  { symbol: "GODFRYPHLP.NS", name: "Godfrey Phillips", sector: "FMCG" },
+  { symbol: "VSTIND.NS", name: "VST Industries", sector: "FMCG" },
+  { symbol: "RELAXO.NS", name: "Relaxo Footwears", sector: "Retail" },
+  { symbol: "BATAINDIA.NS", name: "Bata India", sector: "Retail" },
+  { symbol: "METROBRAND.NS", name: "Metro Brands", sector: "Retail" },
+  { symbol: "CAMPUS.NS", name: "Campus Activewear", sector: "Retail" },
+  { symbol: "VEDANTFASH.NS", name: "Vedant Fashions (Manyavar)", sector: "Retail" },
+  { symbol: "GOCOLORS.NS", name: "Go Fashion (India)", sector: "Retail" },
+  { symbol: "SHOPERSTOP.NS", name: "Shoppers Stop", sector: "Retail" },
+  { symbol: "ARVINDFASN.NS", name: "Arvind Fashions", sector: "Retail" },
+  { symbol: "HONASA.NS", name: "Honasa Consumer (Mamaearth)", sector: "FMCG" },
+  // More IT / Tech / New Age
+  { symbol: "CYIENT.NS", name: "Cyient", sector: "IT" },
+  { symbol: "BIRLASOFT.NS", name: "Birlasoft", sector: "IT" },
+  { symbol: "RATEGAIN.NS", name: "RateGain Travel Technologies", sector: "IT" },
+  { symbol: "HAPPSTMNDS.NS", name: "Happiest Minds", sector: "IT" },
+  { symbol: "TANLA.NS", name: "Tanla Platforms", sector: "IT" },
+  { symbol: "ROUTE.NS", name: "Route Mobile", sector: "IT" },
+  { symbol: "FSL.NS", name: "Firstsource Solutions", sector: "IT" },
+  { symbol: "ECLERX.NS", name: "eClerx Services", sector: "IT" },
+  { symbol: "NAZARA.NS", name: "Nazara Technologies (Gaming)", sector: "Tech" },
+  { symbol: "ZAGGLE.NS", name: "Zaggle Prepaid Ocean", sector: "Fintech" },
+  { symbol: "IXIGO.NS", name: "Le Travenues (ixigo)", sector: "Tech" },
+  { symbol: "PROTEAN.NS", name: "Protean eGov Technologies", sector: "Tech" },
+  { symbol: "BLACKBUCK.NS", name: "Zinka Logistics (BlackBuck)", sector: "Tech" },
+  { symbol: "OLAELEC.NS", name: "Ola Electric Mobility", sector: "Auto" },
+  { symbol: "SWIGGY.NS", name: "Swiggy", sector: "Tech" },
+  // More Metals, Mining, Materials
+  { symbol: "APLAPOLLO.NS", name: "APL Apollo Tubes", sector: "Metals" },
+  { symbol: "JINDALSAW.NS", name: "Jindal Saw", sector: "Metals" },
+  { symbol: "WELSPUNLIV.NS", name: "Welspun Living", sector: "Metals" },
+  { symbol: "RATNAMANI.NS", name: "Ratnamani Metals", sector: "Metals" },
+  { symbol: "JSL.NS", name: "Jindal Stainless", sector: "Metals" },
+  { symbol: "MOIL.NS", name: "MOIL", sector: "Metals" },
+  { symbol: "GRAVITA.NS", name: "Gravita India", sector: "Metals" },
+  // More Cement & Building Materials
+  { symbol: "JKCEMENT.NS", name: "JK Cement", sector: "Cement" },
+  { symbol: "RAMCOCEM.NS", name: "Ramco Cements", sector: "Cement" },
+  { symbol: "JKLAKSHMI.NS", name: "JK Lakshmi Cement", sector: "Cement" },
+  { symbol: "HEIDELBERG.NS", name: "HeidelbergCement India", sector: "Cement" },
+  { symbol: "BIRLACORPN.NS", name: "Birla Corporation", sector: "Cement" },
+  { symbol: "KAJARIACER.NS", name: "Kajaria Ceramics", sector: "Cement" },
+  { symbol: "CERA.NS", name: "Cera Sanitaryware", sector: "Cement" },
+  // Defence & Shipbuilding additional
+  { symbol: "DATAPATTNS.NS", name: "Data Patterns India", sector: "Defence" },
+  { symbol: "PARAS.NS", name: "Paras Defence and Space", sector: "Defence" },
+  { symbol: "MTARTECH.NS", name: "MTAR Technologies", sector: "Defence" },
+  { symbol: "ZENTEC.NS", name: "Zen Technologies", sector: "Defence" },
+  // Misc liquid mid/large caps
+  { symbol: "PGHH.NS", name: "Procter & Gamble Hygiene", sector: "FMCG" },
+  { symbol: "GILLETTE.NS", name: "Gillette India", sector: "FMCG" },
+  { symbol: "3MINDIA.NS", name: "3M India", sector: "Conglomerate" },
+  { symbol: "SUNDARMHLD.NS", name: "Sundaram Finance Holdings", sector: "Financials" },
+  { symbol: "JSWINFRA.NS", name: "JSW Infrastructure", sector: "Infrastructure" },
+  { symbol: "ENGINERSIN.NS", name: "Engineers India", sector: "Capital Goods" },
+  { symbol: "NCC.NS", name: "NCC Limited", sector: "Infrastructure" },
+  { symbol: "KEC.NS", name: "KEC International", sector: "Capital Goods" },
+  { symbol: "KALPATPOWR.NS", name: "Kalpataru Projects International", sector: "Capital Goods" },
 ];
+
 
 function sma(values: number[], period: number): number {
   if (values.length < period) return values.reduce((a, b) => a + b, 0) / values.length;
@@ -959,7 +1116,7 @@ function buildStrategies(price: number, ind: Indicators): TradingStrategy[] {
 
 async function fetchOne(symbol: string, name: string, sector: string): Promise<StockQuote | null> {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1y`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5y`;
     const res = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; LovableStocks/1.0)",
@@ -1036,6 +1193,22 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const ago63 = closes[closes.length - 64] ?? closes[0];
     const momentum1m = ago21 ? ((price - ago21) / ago21) * 100 : 0;
     const momentum3m = ago63 ? ((price - ago63) / ago63) * 100 : 0;
+
+    // ROI over standard windows (using ~21 trading days/month)
+    const roiAt = (daysAgo: number): number => {
+      const idx = closes.length - 1 - daysAgo;
+      if (idx < 0) return 0;
+      const base = closes[idx];
+      return base ? ((price - base) / base) * 100 : 0;
+    };
+    const roi: ROI = {
+      m1: roiAt(21),
+      m3: roiAt(63),
+      m6: roiAt(126),
+      y1: roiAt(252),
+      y3: roiAt(252 * 3),
+      y5: roiAt(252 * 5),
+    };
 
     const recent5 = volumes.slice(-5);
     const recent20 = volumes.slice(-20);
@@ -1165,6 +1338,7 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       stopLoss,
       history,
       strategies,
+      roi,
     };
   } catch (e) {
     console.error("fetchOne failed", symbol, e);
@@ -1172,13 +1346,87 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
   }
 }
 
+// Concurrency-limited batch runner. Yahoo Finance throttles aggressively
+// past ~30 parallel requests — without this, ~30% of rows come back null.
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const i = cursor++;
+      if (i >= items.length) return;
+      out[i] = await fn(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
 export const getIndianStocks = createServerFn({ method: "GET" }).handler(async () => {
-  const results = await Promise.all(
-    DEFAULT_TICKERS.map((t) => fetchOne(t.symbol, t.name, t.sector)),
+  const results = await mapWithConcurrency(DEFAULT_TICKERS, 10, (t) =>
+    fetchOne(t.symbol, t.name, t.sector),
   );
   const quotes = results.filter((q): q is StockQuote => q !== null);
   return { quotes, fetchedAt: Date.now() };
 });
+
+export interface HistoryPoint {
+  t: number; // timestamp (ms)
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+}
+
+export const getStockHistory = createServerFn({ method: "GET" })
+  .inputValidator((data: { symbol: string; range: "1mo" | "6mo" | "1y" | "3y" | "5y" | "max" }) => data)
+  .handler(async ({ data }): Promise<{ points: HistoryPoint[] }> => {
+    try {
+      const interval =
+        data.range === "1mo" ? "1d" : data.range === "6mo" || data.range === "1y" ? "1d" : "1wk";
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(data.symbol)}?interval=${interval}&range=${data.range}`;
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; LovableStocks/1.0)",
+          Accept: "application/json",
+        },
+      });
+      if (!res.ok) return { points: [] };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const json = (await res.json()) as any;
+      const result = json?.chart?.result?.[0];
+      if (!result) return { points: [] };
+      const ts: number[] = result.timestamp ?? [];
+      const q = result.indicators?.quote?.[0] ?? {};
+      const opens: (number | null)[] = q.open ?? [];
+      const highs: (number | null)[] = q.high ?? [];
+      const lows: (number | null)[] = q.low ?? [];
+      const closes: (number | null)[] = q.close ?? [];
+      const vols: (number | null)[] = q.volume ?? [];
+      const points: HistoryPoint[] = [];
+      for (let i = 0; i < ts.length; i++) {
+        const c = closes[i];
+        if (typeof c !== "number" || Number.isNaN(c)) continue;
+        points.push({
+          t: (ts[i] ?? 0) * 1000,
+          o: typeof opens[i] === "number" ? (opens[i] as number) : c,
+          h: typeof highs[i] === "number" ? (highs[i] as number) : c,
+          l: typeof lows[i] === "number" ? (lows[i] as number) : c,
+          c,
+          v: typeof vols[i] === "number" ? (vols[i] as number) : 0,
+        });
+      }
+      return { points };
+    } catch (e) {
+      console.error("getStockHistory failed", data.symbol, e);
+      return { points: [] };
+    }
+  });
 
 function decodeEntities(s: string): string {
   return s
