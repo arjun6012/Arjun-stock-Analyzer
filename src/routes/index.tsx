@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   getIndianStocks,
+  getStockHistory,
   getStockNews,
+  type HistoryPoint,
   type Signal,
   type StockQuote,
   type TradingStrategy,
@@ -493,6 +495,16 @@ function StockRow({
           </div>
         </button>
       </div>
+      {/* Compact ROI strip — visible without expanding */}
+      <div className="flex flex-wrap items-center gap-1.5 px-5 pb-3 -mt-1">
+        <span className="text-[9px] uppercase tracking-wider text-muted-foreground mr-1">ROI</span>
+        <RoiChip label="1M" value={q.roi.m1} />
+        <RoiChip label="3M" value={q.roi.m3} />
+        <RoiChip label="6M" value={q.roi.m6} />
+        <RoiChip label="1Y" value={q.roi.y1} />
+        <RoiChip label="3Y" value={q.roi.y3} />
+        <RoiChip label="5Y" value={q.roi.y5} />
+      </div>
       {expanded && (
         <>
           <IndicatorPanel q={q} />
@@ -500,6 +512,27 @@ function StockRow({
         </>
       )}
     </li>
+  );
+}
+
+function RoiChip({ label, value }: { label: string; value: number }) {
+  if (!Number.isFinite(value) || value === 0) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md border border-border/50 bg-muted/20 px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground">
+        <span className="opacity-70">{label}</span>
+        <span>—</span>
+      </span>
+    );
+  }
+  const up = value >= 0;
+  const color = up
+    ? "border-[oklch(0.72_0.18_150)]/30 bg-[oklch(0.72_0.18_150)]/10 text-[oklch(0.78_0.18_150)]"
+    : "border-[oklch(0.72_0.22_25)]/30 bg-[oklch(0.72_0.22_25)]/10 text-[oklch(0.75_0.22_25)]";
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-mono ${color}`}>
+      <span className="opacity-70">{label}</span>
+      <span className="font-semibold">{up ? "+" : ""}{value.toFixed(1)}%</span>
+    </span>
   );
 }
 
