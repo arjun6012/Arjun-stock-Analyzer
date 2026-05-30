@@ -81,6 +81,13 @@ export interface StockQuote {
   ema21: number;
   ema55: number;
   bbWidth: number;
+  atr: number;
+  atrPct: number;
+  stochK: number;
+  stochD: number;
+  obvTrend: "RISING" | "FALLING" | "FLAT";
+  obvSlope: number;
+  vwap20: number;
   roi: ROI;
   history: {
     closes: number[];
@@ -517,6 +524,159 @@ const DEFAULT_TICKERS: { symbol: string; name: string; sector: string }[] = [
   { symbol: "NCC.NS", name: "NCC Limited", sector: "Infrastructure" },
   { symbol: "KEC.NS", name: "KEC International", sector: "Capital Goods" },
   { symbol: "KALPATPOWR.NS", name: "Kalpataru Projects International", sector: "Capital Goods" },
+  // Expanded universe — mid/small cap across sectors
+  { symbol: "IDFCFIRSTB.NS", name: "IDFC First Bank", sector: "Banking" },
+  { symbol: "FEDERALBNK.NS", name: "Federal Bank", sector: "Banking" },
+  { symbol: "RBLBANK.NS", name: "RBL Bank", sector: "Banking" },
+  { symbol: "BANDHANBNK.NS", name: "Bandhan Bank", sector: "Banking" },
+  { symbol: "KARURVYSYA.NS", name: "Karur Vysya Bank", sector: "Banking" },
+  { symbol: "SOUTHBANK.NS", name: "South Indian Bank", sector: "Banking" },
+  { symbol: "CSBBANK.NS", name: "CSB Bank", sector: "Banking" },
+  { symbol: "DCBBANK.NS", name: "DCB Bank", sector: "Banking" },
+  { symbol: "EQUITASBNK.NS", name: "Equitas Small Finance Bank", sector: "Banking" },
+  { symbol: "UJJIVANSFB.NS", name: "Ujjivan Small Finance Bank", sector: "Banking" },
+  { symbol: "MANAPPURAM.NS", name: "Manappuram Finance", sector: "Financial Services" },
+  { symbol: "MUTHOOTFIN.NS", name: "Muthoot Finance", sector: "Financial Services" },
+  { symbol: "POONAWALLA.NS", name: "Poonawalla Fincorp", sector: "Financial Services" },
+  { symbol: "ABCAPITAL.NS", name: "Aditya Birla Capital", sector: "Financial Services" },
+  { symbol: "IIFL.NS", name: "IIFL Finance", sector: "Financial Services" },
+  { symbol: "PFC.NS", name: "Power Finance Corp", sector: "Financial Services" },
+  { symbol: "RECLTD.NS", name: "REC Limited", sector: "Financial Services" },
+  { symbol: "IRFC.NS", name: "Indian Railway Finance", sector: "Financial Services" },
+  { symbol: "MAHABANK.NS", name: "Bank of Maharashtra", sector: "Banking" },
+  { symbol: "CENTRALBK.NS", name: "Central Bank of India", sector: "Banking" },
+  { symbol: "UCOBANK.NS", name: "UCO Bank", sector: "Banking" },
+  { symbol: "IOB.NS", name: "Indian Overseas Bank", sector: "Banking" },
+  { symbol: "PNBHOUSING.NS", name: "PNB Housing Finance", sector: "Financial Services" },
+  { symbol: "LICHSGFIN.NS", name: "LIC Housing Finance", sector: "Financial Services" },
+  { symbol: "HUDCO.NS", name: "HUDCO", sector: "Financial Services" },
+  { symbol: "CDSL.NS", name: "CDSL", sector: "Financial Services" },
+  { symbol: "BSE.NS", name: "BSE Ltd", sector: "Financial Services" },
+  { symbol: "MCX.NS", name: "MCX India", sector: "Financial Services" },
+  { symbol: "ANGELONE.NS", name: "Angel One", sector: "Financial Services" },
+  { symbol: "MOTILALOFS.NS", name: "Motilal Oswal", sector: "Financial Services" },
+  { symbol: "NUVAMA.NS", name: "Nuvama Wealth", sector: "Financial Services" },
+  { symbol: "BIRLACORPN.NS", name: "Birla Corporation", sector: "Cement" },
+  { symbol: "JKLAKSHMI.NS", name: "JK Lakshmi Cement", sector: "Cement" },
+  { symbol: "JKCEMENT.NS", name: "JK Cement", sector: "Cement" },
+  { symbol: "HEIDELBERG.NS", name: "Heidelberg Cement", sector: "Cement" },
+  { symbol: "RAMCOCEM.NS", name: "Ramco Cements", sector: "Cement" },
+  { symbol: "STARCEMENT.NS", name: "Star Cement", sector: "Cement" },
+  { symbol: "ORIENTCEM.NS", name: "Orient Cement", sector: "Cement" },
+  { symbol: "BHARATFORG.NS", name: "Bharat Forge", sector: "Auto Components" },
+  { symbol: "MOTHERSON.NS", name: "Samvardhana Motherson", sector: "Auto Components" },
+  { symbol: "EXIDEIND.NS", name: "Exide Industries", sector: "Auto Components" },
+  { symbol: "AMARAJABAT.NS", name: "Amara Raja Batteries", sector: "Auto Components" },
+  { symbol: "BOSCHLTD.NS", name: "Bosch Ltd", sector: "Auto Components" },
+  { symbol: "ENDURANCE.NS", name: "Endurance Technologies", sector: "Auto Components" },
+  { symbol: "SUNDRMFAST.NS", name: "Sundram Fasteners", sector: "Auto Components" },
+  { symbol: "BALKRISIND.NS", name: "Balkrishna Industries", sector: "Auto Components" },
+  { symbol: "APOLLOTYRE.NS", name: "Apollo Tyres", sector: "Auto Components" },
+  { symbol: "MRF.NS", name: "MRF", sector: "Auto Components" },
+  { symbol: "CEATLTD.NS", name: "CEAT", sector: "Auto Components" },
+  { symbol: "JKTYRE.NS", name: "JK Tyre", sector: "Auto Components" },
+  { symbol: "ESCORTS.NS", name: "Escorts Kubota", sector: "Auto" },
+  { symbol: "FORCEMOT.NS", name: "Force Motors", sector: "Auto" },
+  { symbol: "TVSMOTOR.NS", name: "TVS Motor", sector: "Auto" },
+  { symbol: "ATULAUTO.NS", name: "Atul Auto", sector: "Auto" },
+  { symbol: "GLENMARK.NS", name: "Glenmark Pharma", sector: "Pharmaceuticals" },
+  { symbol: "ALKEM.NS", name: "Alkem Laboratories", sector: "Pharmaceuticals" },
+  { symbol: "ZYDUSLIFE.NS", name: "Zydus Lifesciences", sector: "Pharmaceuticals" },
+  { symbol: "TORNTPHARM.NS", name: "Torrent Pharma", sector: "Pharmaceuticals" },
+  { symbol: "AUROPHARMA.NS", name: "Aurobindo Pharma", sector: "Pharmaceuticals" },
+  { symbol: "LUPIN.NS", name: "Lupin", sector: "Pharmaceuticals" },
+  { symbol: "BIOCON.NS", name: "Biocon", sector: "Pharmaceuticals" },
+  { symbol: "AJANTPHARM.NS", name: "Ajanta Pharma", sector: "Pharmaceuticals" },
+  { symbol: "IPCALAB.NS", name: "IPCA Laboratories", sector: "Pharmaceuticals" },
+  { symbol: "NATCOPHARM.NS", name: "Natco Pharma", sector: "Pharmaceuticals" },
+  { symbol: "GRANULES.NS", name: "Granules India", sector: "Pharmaceuticals" },
+  { symbol: "LAURUSLABS.NS", name: "Laurus Labs", sector: "Pharmaceuticals" },
+  { symbol: "MANKIND.NS", name: "Mankind Pharma", sector: "Pharmaceuticals" },
+  { symbol: "ERIS.NS", name: "Eris Lifesciences", sector: "Pharmaceuticals" },
+  { symbol: "FORTIS.NS", name: "Fortis Healthcare", sector: "Healthcare" },
+  { symbol: "MAXHEALTH.NS", name: "Max Healthcare", sector: "Healthcare" },
+  { symbol: "NH.NS", name: "Narayana Hrudayalaya", sector: "Healthcare" },
+  { symbol: "MEDANTA.NS", name: "Global Health (Medanta)", sector: "Healthcare" },
+  { symbol: "KIMS.NS", name: "Krishna Institute of Medical Sciences", sector: "Healthcare" },
+  { symbol: "RAINBOW.NS", name: "Rainbow Children's Medicare", sector: "Healthcare" },
+  { symbol: "METROPOLIS.NS", name: "Metropolis Healthcare", sector: "Healthcare" },
+  { symbol: "DRLAL.NS", name: "Dr Lal PathLabs", sector: "Healthcare" },
+  { symbol: "THYROCARE.NS", name: "Thyrocare", sector: "Healthcare" },
+  { symbol: "PERSISTENT.NS", name: "Persistent Systems", sector: "IT" },
+  { symbol: "COFORGE.NS", name: "Coforge", sector: "IT" },
+  { symbol: "MPHASIS.NS", name: "Mphasis", sector: "IT" },
+  { symbol: "LTTS.NS", name: "L&T Technology Services", sector: "IT" },
+  { symbol: "KPITTECH.NS", name: "KPIT Technologies", sector: "IT" },
+  { symbol: "TATAELXSI.NS", name: "Tata Elxsi", sector: "IT" },
+  { symbol: "ZENSARTECH.NS", name: "Zensar Technologies", sector: "IT" },
+  { symbol: "BIRLASOFT.NS", name: "Birlasoft", sector: "IT" },
+  { symbol: "RATEGAIN.NS", name: "Rategain Travel Tech", sector: "IT" },
+  { symbol: "MAPMYINDIA.NS", name: "C.E. Info Systems (MapmyIndia)", sector: "IT" },
+  { symbol: "NEWGEN.NS", name: "Newgen Software", sector: "IT" },
+  { symbol: "ECLERX.NS", name: "eClerx Services", sector: "IT" },
+  { symbol: "INTELLECT.NS", name: "Intellect Design Arena", sector: "IT" },
+  { symbol: "AFFLE.NS", name: "Affle India", sector: "IT" },
+  { symbol: "ROUTE.NS", name: "Route Mobile", sector: "IT" },
+  { symbol: "TANLA.NS", name: "Tanla Platforms", sector: "IT" },
+  { symbol: "POLICYBZR.NS", name: "PB Fintech (PolicyBazaar)", sector: "New Age Tech" },
+  { symbol: "PAYTM.NS", name: "One 97 (Paytm)", sector: "New Age Tech" },
+  { symbol: "ZOMATO.NS", name: "Zomato (Eternal)", sector: "New Age Tech" },
+  { symbol: "NYKAA.NS", name: "FSN E-Commerce (Nykaa)", sector: "New Age Tech" },
+  { symbol: "DELHIVERY.NS", name: "Delhivery", sector: "New Age Tech" },
+  { symbol: "EASEMYTRIP.NS", name: "Easy Trip Planners", sector: "New Age Tech" },
+  { symbol: "IXIGO.NS", name: "Le Travenues (Ixigo)", sector: "New Age Tech" },
+  { symbol: "FIRSTCRY.NS", name: "Brainbees Solutions (FirstCry)", sector: "New Age Tech" },
+  { symbol: "HONASA.NS", name: "Honasa Consumer (Mamaearth)", sector: "FMCG" },
+  { symbol: "PATANJALI.NS", name: "Patanjali Foods", sector: "FMCG" },
+  { symbol: "EMAMILTD.NS", name: "Emami", sector: "FMCG" },
+  { symbol: "BAJAJCON.NS", name: "Bajaj Consumer Care", sector: "FMCG" },
+  { symbol: "GILLETTE.NS", name: "Gillette India", sector: "FMCG" },
+  { symbol: "VBL.NS", name: "Varun Beverages", sector: "FMCG" },
+  { symbol: "RADICO.NS", name: "Radico Khaitan", sector: "FMCG" },
+  { symbol: "UNITDSPR.NS", name: "United Spirits", sector: "FMCG" },
+  { symbol: "UBL.NS", name: "United Breweries", sector: "FMCG" },
+  { symbol: "BIKAJI.NS", name: "Bikaji Foods", sector: "FMCG" },
+  { symbol: "GODFRYPHLP.NS", name: "Godfrey Phillips", sector: "FMCG" },
+  { symbol: "VSTIND.NS", name: "VST Industries", sector: "FMCG" },
+  { symbol: "ASTRAL.NS", name: "Astral Ltd", sector: "Building Materials" },
+  { symbol: "FINOLEXIND.NS", name: "Finolex Industries", sector: "Building Materials" },
+  { symbol: "SUPREMEIND.NS", name: "Supreme Industries", sector: "Building Materials" },
+  { symbol: "KAJARIACER.NS", name: "Kajaria Ceramics", sector: "Building Materials" },
+  { symbol: "CERA.NS", name: "Cera Sanitaryware", sector: "Building Materials" },
+  { symbol: "GREENPLY.NS", name: "Greenply Industries", sector: "Building Materials" },
+  { symbol: "CENTURYPLY.NS", name: "Century Plyboards", sector: "Building Materials" },
+  { symbol: "GREENPANEL.NS", name: "Greenpanel Industries", sector: "Building Materials" },
+  { symbol: "POLYCAB.NS", name: "Polycab India", sector: "Capital Goods" },
+  { symbol: "KEI.NS", name: "KEI Industries", sector: "Capital Goods" },
+  { symbol: "HAVELLS.NS", name: "Havells India", sector: "Consumer Durables" },
+  { symbol: "CROMPTON.NS", name: "Crompton Greaves Consumer", sector: "Consumer Durables" },
+  { symbol: "VOLTAS.NS", name: "Voltas", sector: "Consumer Durables" },
+  { symbol: "BLUESTARCO.NS", name: "Blue Star", sector: "Consumer Durables" },
+  { symbol: "WHIRLPOOL.NS", name: "Whirlpool India", sector: "Consumer Durables" },
+  { symbol: "TTKPRESTIG.NS", name: "TTK Prestige", sector: "Consumer Durables" },
+  { symbol: "DIXON.NS", name: "Dixon Technologies", sector: "Consumer Durables" },
+  { symbol: "AMBER.NS", name: "Amber Enterprises", sector: "Consumer Durables" },
+  { symbol: "KAYNES.NS", name: "Kaynes Technology", sector: "Capital Goods" },
+  { symbol: "SYRMA.NS", name: "Syrma SGS Technology", sector: "Capital Goods" },
+  { symbol: "JYOTICNC.NS", name: "Jyoti CNC Automation", sector: "Capital Goods" },
+  { symbol: "TIINDIA.NS", name: "Tube Investments", sector: "Capital Goods" },
+  { symbol: "AIAENG.NS", name: "AIA Engineering", sector: "Capital Goods" },
+  { symbol: "GRINDWELL.NS", name: "Grindwell Norton", sector: "Capital Goods" },
+  { symbol: "TIMKEN.NS", name: "Timken India", sector: "Capital Goods" },
+  { symbol: "SKFINDIA.NS", name: "SKF India", sector: "Capital Goods" },
+  { symbol: "SCHAEFFLER.NS", name: "Schaeffler India", sector: "Capital Goods" },
+  { symbol: "ELECON.NS", name: "Elecon Engineering", sector: "Capital Goods" },
+  { symbol: "JINDALSTEL.NS", name: "Jindal Steel & Power", sector: "Metals" },
+  { symbol: "WELCORP.NS", name: "Welspun Corp", sector: "Metals" },
+  { symbol: "RATNAMANI.NS", name: "Ratnamani Metals", sector: "Metals" },
+  { symbol: "APLAPOLLO.NS", name: "APL Apollo Tubes", sector: "Metals" },
+  { symbol: "SAIL.NS", name: "Steel Authority of India", sector: "Metals" },
+  { symbol: "NMDC.NS", name: "NMDC", sector: "Metals" },
+  { symbol: "MOIL.NS", name: "MOIL", sector: "Metals" },
+  { symbol: "NATIONALUM.NS", name: "National Aluminium", sector: "Metals" },
+  { symbol: "HINDCOPPER.NS", name: "Hindustan Copper", sector: "Metals" },
+  { symbol: "GMDC.NS", name: "Gujarat Mineral Dev Corp", sector: "Metals" },
+  { symbol: "JSL.NS", name: "Jindal Stainless", sector: "Metals" },
 ];
 
 
@@ -570,6 +730,79 @@ function stddev(values: number[]): number {
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
   const variance = values.reduce((a, b) => a + (b - mean) * (b - mean), 0) / values.length;
   return Math.sqrt(variance);
+}
+
+function calculateATR(highs: number[], lows: number[], closes: number[], period = 14): number {
+  if (closes.length < period + 1) return 0;
+  const trs: number[] = [];
+  const start = Math.max(1, closes.length - period * 3);
+  for (let i = start; i < closes.length; i++) {
+    const tr = Math.max(
+      highs[i] - lows[i],
+      Math.abs(highs[i] - closes[i - 1]),
+      Math.abs(lows[i] - closes[i - 1]),
+    );
+    trs.push(tr);
+  }
+  const slice = trs.slice(-period);
+  return slice.reduce((a, b) => a + b, 0) / slice.length;
+}
+
+function calculateStochastic(
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  kPeriod = 14,
+  dPeriod = 3,
+): { k: number; d: number } {
+  if (closes.length < kPeriod) return { k: 50, d: 50 };
+  const ks: number[] = [];
+  for (let i = kPeriod - 1; i < closes.length; i++) {
+    const hh = Math.max(...highs.slice(i - kPeriod + 1, i + 1));
+    const ll = Math.min(...lows.slice(i - kPeriod + 1, i + 1));
+    const range = hh - ll;
+    ks.push(range > 0 ? ((closes[i] - ll) / range) * 100 : 50);
+  }
+  const k = ks[ks.length - 1] ?? 50;
+  const dSlice = ks.slice(-dPeriod);
+  const d = dSlice.length ? dSlice.reduce((a, b) => a + b, 0) / dSlice.length : k;
+  return { k, d };
+}
+
+function calculateOBV(
+  closes: number[],
+  volumes: number[],
+): { trend: "RISING" | "FALLING" | "FLAT"; slope: number } {
+  if (closes.length < 21) return { trend: "FLAT", slope: 0 };
+  const obv: number[] = [0];
+  for (let i = 1; i < closes.length; i++) {
+    const prev = obv[obv.length - 1];
+    if (closes[i] > closes[i - 1]) obv.push(prev + volumes[i]);
+    else if (closes[i] < closes[i - 1]) obv.push(prev - volumes[i]);
+    else obv.push(prev);
+  }
+  const recent = obv.slice(-20);
+  const first = recent[0];
+  const last = recent[recent.length - 1];
+  const magnitude = Math.max(Math.abs(first), Math.abs(last), 1);
+  const slope = ((last - first) / magnitude) * 100;
+  let trend: "RISING" | "FALLING" | "FLAT" = "FLAT";
+  if (slope > 5) trend = "RISING";
+  else if (slope < -5) trend = "FALLING";
+  return { trend, slope };
+}
+
+function calculateVWAP(highs: number[], lows: number[], closes: number[], volumes: number[], period = 20): number {
+  const n = Math.min(period, closes.length);
+  if (n === 0) return 0;
+  let pv = 0;
+  let v = 0;
+  for (let i = closes.length - n; i < closes.length; i++) {
+    const tp = (highs[i] + lows[i] + closes[i]) / 3;
+    pv += tp * volumes[i];
+    v += volumes[i];
+  }
+  return v > 0 ? pv / v : closes[closes.length - 1];
 }
 
 function calculateADX(
@@ -735,6 +968,13 @@ interface Indicators {
   ema21: number;
   ema55: number;
   bbWidth: number;
+  atr: number;
+  atrPct: number;
+  stochK: number;
+  stochD: number;
+  obvTrend: "RISING" | "FALLING" | "FLAT";
+  obvSlope: number;
+  vwap20: number;
 }
 
 function deriveSignal(
@@ -810,6 +1050,45 @@ function deriveSignal(
   } else {
     reasons.push(`Neutral RSI ${ind.rsi.toFixed(0)}`);
   }
+  // 13. Stochastic %K vs %D — momentum reversal cue
+  if (ind.stochK < 20 && ind.stochK > ind.stochD) {
+    score += 1.2;
+    reasons.push(`Stochastic oversold turning up (${ind.stochK.toFixed(0)})`);
+    confluenceReasons.push("Stochastic %K crossing up from oversold");
+  } else if (ind.stochK > 80 && ind.stochK < ind.stochD) {
+    score -= 1.2;
+    reasons.push(`Stochastic overbought turning down (${ind.stochK.toFixed(0)})`);
+    confluenceReasons.push("Stochastic %K crossing down from overbought");
+  }
+
+  // 14. OBV / accumulation-distribution — smart-money trend
+  if (ind.obvTrend === "RISING" && price > ind.sma20) {
+    score += 1.0;
+    reasons.push(`OBV rising (+${ind.obvSlope.toFixed(0)}%) — accumulation`);
+    confluenceReasons.push("OBV uptrend confirms price (smart money buying)");
+  } else if (ind.obvTrend === "FALLING" && price < ind.sma20) {
+    score -= 1.0;
+    reasons.push(`OBV falling (${ind.obvSlope.toFixed(0)}%) — distribution`);
+    confluenceReasons.push("OBV downtrend confirms weakness (distribution)");
+  }
+
+  // 15. VWAP — institutional fair-value reference
+  if (ind.vwap20 > 0) {
+    const vwapDelta = ((price - ind.vwap20) / ind.vwap20) * 100;
+    if (vwapDelta > 0 && vwapDelta < 2 && ind.momentum1m > 0) {
+      score += 0.5;
+      reasons.push(`Holding above 20D VWAP (+${vwapDelta.toFixed(1)}%)`);
+    } else if (vwapDelta < 0 && vwapDelta > -2 && ind.momentum1m < 0) {
+      score -= 0.5;
+      reasons.push(`Rejected at 20D VWAP (${vwapDelta.toFixed(1)}%)`);
+    }
+  }
+
+  // 16. ATR-based volatility filter — penalise low-conviction signals in high-vol names
+  if (ind.atrPct > 5) {
+    reasons.push(`High volatility (ATR ${ind.atrPct.toFixed(1)}%)`);
+  }
+
 
   // 6. Money Flow Index (MFI)
   if (ind.mfi < 20) {
@@ -955,7 +1234,7 @@ function deriveSignal(
   else if (score <= -2.5) signal = "SELL";
 
   // Confidence scaled to a maximum expected strategy confluence score of ~10
-  const confidence = Math.max(20, Math.min(100, Math.round((Math.abs(score) / 10) * 100)));
+  const confidence = Math.max(20, Math.min(100, Math.round((Math.abs(score) / 13) * 100)));
 
   let confidenceTier: "HIGH" | "MEDIUM" | "LOW" = "LOW";
   if (confidence >= 75) confidenceTier = "HIGH";
@@ -1149,7 +1428,29 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
 
     if (closes.length < 20) return null;
 
-    const price = meta.regularMarketPrice ?? closes[closes.length - 1] ?? 0;
+    // Cross-source price validation: chart endpoint can lag intraday by 15min;
+    // v7 quote endpoint streams live mark when available. Use the freshest of the two.
+    let price = meta.regularMarketPrice ?? closes[closes.length - 1] ?? 0;
+    let liveTs = (meta.regularMarketTime ?? 0) * 1000;
+    try {
+      const qres = await fetch(
+        `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`,
+        { headers: { "User-Agent": "Mozilla/5.0 (compatible; LovableStocks/1.0)" } },
+      );
+      if (qres.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const qjson = (await qres.json()) as any;
+        const q = qjson?.quoteResponse?.result?.[0];
+        const livePrice = q?.regularMarketPrice;
+        const liveTime = (q?.regularMarketTime ?? 0) * 1000;
+        if (typeof livePrice === "number" && livePrice > 0 && liveTime >= liveTs) {
+          price = livePrice;
+          liveTs = liveTime;
+        }
+      }
+    } catch {
+      /* fall through — chart price already set */
+    }
     const prev =
       meta.chartPreviousClose ?? meta.previousClose ?? closes[closes.length - 2] ?? price;
     const change = price - prev;
@@ -1223,6 +1524,12 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const macdSignalSeries = emaSeries(macdLineSeries, 9);
     const macdCross = detectMACDCrossover(macdLineSeries, macdSignalSeries);
 
+    const atrVal = calculateATR(highs, lows, closes, 14);
+    const atrPctVal = price > 0 ? (atrVal / price) * 100 : 0;
+    const stochVals = calculateStochastic(highs, lows, closes, 14, 3);
+    const obvVals = calculateOBV(closes, volumes);
+    const vwapVal = calculateVWAP(highs, lows, closes, volumes, 20);
+
     const range = week52High - week52Low;
     const fib236 = week52High - 0.236 * range;
     const fib382 = week52High - 0.382 * range;
@@ -1279,6 +1586,13 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       ema21: ema21Val,
       ema55: ema55Val,
       bbWidth,
+      atr: atrVal,
+      atrPct: atrPctVal,
+      stochK: stochVals.k,
+      stochD: stochVals.d,
+      obvTrend: obvVals.trend,
+      obvSlope: obvVals.slope,
+      vwap20: vwapVal,
     };
 
     const { signal, reasons, score, confidence, confluenceReasons, confidenceTier } = deriveSignal(

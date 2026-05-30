@@ -70,11 +70,13 @@ const signalStyles: Record<Signal, string> = {
 };
 
 function SignalPill({ signal }: { signal: Signal }) {
+  const glow =
+    signal === "BUY" ? "sb-glow-buy" : signal === "SELL" ? "sb-glow-sell" : "";
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wider ${signalStyles[signal]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wider ${signalStyles[signal]} ${glow}`}
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      <span className="sb-sparkle h-1.5 w-1.5 rounded-full bg-current" />
       {signal}
     </span>
   );
@@ -493,6 +495,12 @@ function StockRow({
             <span>{q.confidence}% confidence</span>
             {q.confidenceTier === "HIGH" && <span className="text-[oklch(0.82_0.16_85)]">★</span>}
           </div>
+          <div className="relative mt-0.5 h-1 w-20 overflow-hidden rounded-full bg-muted/60">
+            <div
+              className="sb-confidence-bar sb-bar-grow h-full rounded-full"
+              style={{ width: `${q.confidence}%` }}
+            />
+          </div>
         </button>
       </div>
       {/* Compact ROI strip — visible without expanding */}
@@ -589,6 +597,36 @@ function IndicatorPanel({ q }: { q: StockQuote }) {
       value: `${q.volumeRatio.toFixed(2)}x`,
       status: q.volumeRatio > 1.3 ? "bullish" : "neutral",
       details: "5d average vs 20d average",
+    },
+    {
+      name: "Stochastic %K/%D",
+      value: `${q.stochK.toFixed(0)} / ${q.stochD.toFixed(0)}`,
+      status:
+        q.stochK < 20 && q.stochK > q.stochD
+          ? "bullish"
+          : q.stochK > 80 && q.stochK < q.stochD
+            ? "bearish"
+            : "neutral",
+      details: q.stochK < 20 ? "Oversold zone" : q.stochK > 80 ? "Overbought zone" : "Mid range",
+    },
+    {
+      name: "OBV (Smart Money)",
+      value: `${q.obvTrend} ${q.obvSlope >= 0 ? "+" : ""}${q.obvSlope.toFixed(0)}%`,
+      status:
+        q.obvTrend === "RISING" ? "bullish" : q.obvTrend === "FALLING" ? "bearish" : "neutral",
+      details: "On-Balance Volume 20d slope",
+    },
+    {
+      name: "ATR Volatility",
+      value: `₹${q.atr.toFixed(2)} (${q.atrPct.toFixed(1)}%)`,
+      status: q.atrPct > 5 ? "bearish" : q.atrPct < 1.5 ? "bullish" : "neutral",
+      details: "Average True Range (14d)",
+    },
+    {
+      name: "VWAP (20d)",
+      value: `${formatINR(q.vwap20)} (${(((q.price - q.vwap20) / q.vwap20) * 100).toFixed(1)}%)`,
+      status: q.price > q.vwap20 ? "bullish" : "bearish",
+      details: "Institutional fair-value reference",
     },
   ];
 
