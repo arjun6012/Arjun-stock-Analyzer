@@ -495,6 +495,12 @@ function StockRow({
             <span>{q.confidence}% confidence</span>
             {q.confidenceTier === "HIGH" && <span className="text-[oklch(0.82_0.16_85)]">★</span>}
           </div>
+          <div className="relative mt-0.5 h-1 w-20 overflow-hidden rounded-full bg-muted/60">
+            <div
+              className="sb-confidence-bar sb-bar-grow h-full rounded-full"
+              style={{ width: `${q.confidence}%` }}
+            />
+          </div>
         </button>
       </div>
       {/* Compact ROI strip — visible without expanding */}
