@@ -1463,6 +1463,12 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const macdSignalSeries = emaSeries(macdLineSeries, 9);
     const macdCross = detectMACDCrossover(macdLineSeries, macdSignalSeries);
 
+    const atrVal = calculateATR(highs, lows, closes, 14);
+    const atrPctVal = price > 0 ? (atrVal / price) * 100 : 0;
+    const stochVals = calculateStochastic(highs, lows, closes, 14, 3);
+    const obvVals = calculateOBV(closes, volumes);
+    const vwapVal = calculateVWAP(highs, lows, closes, volumes, 20);
+
     const range = week52High - week52Low;
     const fib236 = week52High - 0.236 * range;
     const fib382 = week52High - 0.382 * range;
