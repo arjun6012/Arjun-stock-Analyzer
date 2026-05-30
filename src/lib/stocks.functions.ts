@@ -1519,6 +1519,13 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       ema21: ema21Val,
       ema55: ema55Val,
       bbWidth,
+      atr: atrVal,
+      atrPct: atrPctVal,
+      stochK: stochVals.k,
+      stochD: stochVals.d,
+      obvTrend: obvVals.trend,
+      obvSlope: obvVals.slope,
+      vwap20: vwapVal,
     };
 
     const { signal, reasons, score, confidence, confluenceReasons, confidenceTier } = deriveSignal(
