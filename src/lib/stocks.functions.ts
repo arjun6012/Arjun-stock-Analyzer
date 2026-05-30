@@ -895,6 +895,13 @@ interface Indicators {
   ema21: number;
   ema55: number;
   bbWidth: number;
+  atr: number;
+  atrPct: number;
+  stochK: number;
+  stochD: number;
+  obvTrend: "RISING" | "FALLING" | "FLAT";
+  obvSlope: number;
+  vwap20: number;
 }
 
 function deriveSignal(
