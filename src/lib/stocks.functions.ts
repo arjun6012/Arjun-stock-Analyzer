@@ -1234,7 +1234,7 @@ function deriveSignal(
   else if (score <= -2.5) signal = "SELL";
 
   // Confidence scaled to a maximum expected strategy confluence score of ~10
-  const confidence = Math.max(20, Math.min(100, Math.round((Math.abs(score) / 10) * 100)));
+  const confidence = Math.max(20, Math.min(100, Math.round((Math.abs(score) / 13) * 100)));
 
   let confidenceTier: "HIGH" | "MEDIUM" | "LOW" = "LOW";
   if (confidence >= 75) confidenceTier = "HIGH";
