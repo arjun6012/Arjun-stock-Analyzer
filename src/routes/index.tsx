@@ -70,11 +70,13 @@ const signalStyles: Record<Signal, string> = {
 };
 
 function SignalPill({ signal }: { signal: Signal }) {
+  const glow =
+    signal === "BUY" ? "sb-glow-buy" : signal === "SELL" ? "sb-glow-sell" : "";
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wider ${signalStyles[signal]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wider ${signalStyles[signal]} ${glow}`}
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      <span className="sb-sparkle h-1.5 w-1.5 rounded-full bg-current" />
       {signal}
     </span>
   );
