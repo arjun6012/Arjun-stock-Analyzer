@@ -1428,7 +1428,29 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
 
     if (closes.length < 20) return null;
 
-    const price = meta.regularMarketPrice ?? closes[closes.length - 1] ?? 0;
+    // Cross-source price validation: chart endpoint can lag intraday by 15min;
+    // v7 quote endpoint streams live mark when available. Use the freshest of the two.
+    let price = meta.regularMarketPrice ?? closes[closes.length - 1] ?? 0;
+    let liveTs = (meta.regularMarketTime ?? 0) * 1000;
+    try {
+      const qres = await fetch(
+        `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`,
+        { headers: { "User-Agent": "Mozilla/5.0 (compatible; LovableStocks/1.0)" } },
+      );
+      if (qres.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const qjson = (await qres.json()) as any;
+        const q = qjson?.quoteResponse?.result?.[0];
+        const livePrice = q?.regularMarketPrice;
+        const liveTime = (q?.regularMarketTime ?? 0) * 1000;
+        if (typeof livePrice === "number" && livePrice > 0 && liveTime >= liveTs) {
+          price = livePrice;
+          liveTs = liveTime;
+        }
+      }
+    } catch {
+      /* fall through — chart price already set */
+    }
     const prev =
       meta.chartPreviousClose ?? meta.previousClose ?? closes[closes.length - 2] ?? price;
     const change = price - prev;
