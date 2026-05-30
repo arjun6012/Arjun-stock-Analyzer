@@ -1050,6 +1050,45 @@ function deriveSignal(
   } else {
     reasons.push(`Neutral RSI ${ind.rsi.toFixed(0)}`);
   }
+  // 13. Stochastic %K vs %D — momentum reversal cue
+  if (ind.stochK < 20 && ind.stochK > ind.stochD) {
+    score += 1.2;
+    reasons.push(`Stochastic oversold turning up (${ind.stochK.toFixed(0)})`);
+    confluenceReasons.push("Stochastic %K crossing up from oversold");
+  } else if (ind.stochK > 80 && ind.stochK < ind.stochD) {
+    score -= 1.2;
+    reasons.push(`Stochastic overbought turning down (${ind.stochK.toFixed(0)})`);
+    confluenceReasons.push("Stochastic %K crossing down from overbought");
+  }
+
+  // 14. OBV / accumulation-distribution — smart-money trend
+  if (ind.obvTrend === "RISING" && price > ind.sma20) {
+    score += 1.0;
+    reasons.push(`OBV rising (+${ind.obvSlope.toFixed(0)}%) — accumulation`);
+    confluenceReasons.push("OBV uptrend confirms price (smart money buying)");
+  } else if (ind.obvTrend === "FALLING" && price < ind.sma20) {
+    score -= 1.0;
+    reasons.push(`OBV falling (${ind.obvSlope.toFixed(0)}%) — distribution`);
+    confluenceReasons.push("OBV downtrend confirms weakness (distribution)");
+  }
+
+  // 15. VWAP — institutional fair-value reference
+  if (ind.vwap20 > 0) {
+    const vwapDelta = ((price - ind.vwap20) / ind.vwap20) * 100;
+    if (vwapDelta > 0 && vwapDelta < 2 && ind.momentum1m > 0) {
+      score += 0.5;
+      reasons.push(`Holding above 20D VWAP (+${vwapDelta.toFixed(1)}%)`);
+    } else if (vwapDelta < 0 && vwapDelta > -2 && ind.momentum1m < 0) {
+      score -= 0.5;
+      reasons.push(`Rejected at 20D VWAP (${vwapDelta.toFixed(1)}%)`);
+    }
+  }
+
+  // 16. ATR-based volatility filter — penalise low-conviction signals in high-vol names
+  if (ind.atrPct > 5) {
+    reasons.push(`High volatility (ATR ${ind.atrPct.toFixed(1)}%)`);
+  }
+
 
   // 6. Money Flow Index (MFI)
   if (ind.mfi < 20) {
