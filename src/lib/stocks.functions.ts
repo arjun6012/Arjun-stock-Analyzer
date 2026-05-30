@@ -732,6 +732,79 @@ function stddev(values: number[]): number {
   return Math.sqrt(variance);
 }
 
+function calculateATR(highs: number[], lows: number[], closes: number[], period = 14): number {
+  if (closes.length < period + 1) return 0;
+  const trs: number[] = [];
+  const start = Math.max(1, closes.length - period * 3);
+  for (let i = start; i < closes.length; i++) {
+    const tr = Math.max(
+      highs[i] - lows[i],
+      Math.abs(highs[i] - closes[i - 1]),
+      Math.abs(lows[i] - closes[i - 1]),
+    );
+    trs.push(tr);
+  }
+  const slice = trs.slice(-period);
+  return slice.reduce((a, b) => a + b, 0) / slice.length;
+}
+
+function calculateStochastic(
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  kPeriod = 14,
+  dPeriod = 3,
+): { k: number; d: number } {
+  if (closes.length < kPeriod) return { k: 50, d: 50 };
+  const ks: number[] = [];
+  for (let i = kPeriod - 1; i < closes.length; i++) {
+    const hh = Math.max(...highs.slice(i - kPeriod + 1, i + 1));
+    const ll = Math.min(...lows.slice(i - kPeriod + 1, i + 1));
+    const range = hh - ll;
+    ks.push(range > 0 ? ((closes[i] - ll) / range) * 100 : 50);
+  }
+  const k = ks[ks.length - 1] ?? 50;
+  const dSlice = ks.slice(-dPeriod);
+  const d = dSlice.length ? dSlice.reduce((a, b) => a + b, 0) / dSlice.length : k;
+  return { k, d };
+}
+
+function calculateOBV(
+  closes: number[],
+  volumes: number[],
+): { trend: "RISING" | "FALLING" | "FLAT"; slope: number } {
+  if (closes.length < 21) return { trend: "FLAT", slope: 0 };
+  const obv: number[] = [0];
+  for (let i = 1; i < closes.length; i++) {
+    const prev = obv[obv.length - 1];
+    if (closes[i] > closes[i - 1]) obv.push(prev + volumes[i]);
+    else if (closes[i] < closes[i - 1]) obv.push(prev - volumes[i]);
+    else obv.push(prev);
+  }
+  const recent = obv.slice(-20);
+  const first = recent[0];
+  const last = recent[recent.length - 1];
+  const magnitude = Math.max(Math.abs(first), Math.abs(last), 1);
+  const slope = ((last - first) / magnitude) * 100;
+  let trend: "RISING" | "FALLING" | "FLAT" = "FLAT";
+  if (slope > 5) trend = "RISING";
+  else if (slope < -5) trend = "FALLING";
+  return { trend, slope };
+}
+
+function calculateVWAP(highs: number[], lows: number[], closes: number[], volumes: number[], period = 20): number {
+  const n = Math.min(period, closes.length);
+  if (n === 0) return 0;
+  let pv = 0;
+  let v = 0;
+  for (let i = closes.length - n; i < closes.length; i++) {
+    const tp = (highs[i] + lows[i] + closes[i]) / 3;
+    pv += tp * volumes[i];
+    v += volumes[i];
+  }
+  return v > 0 ? pv / v : closes[closes.length - 1];
+}
+
 function calculateADX(
   highs: number[],
   lows: number[],
