@@ -140,7 +140,13 @@ function Index() {
   }, [quotes]);
 
   const filtered = useMemo(() => {
+    const seen = new Set<string>();
     return quotes
+      .filter((q) => {
+        if (seen.has(q.symbol)) return false;
+        seen.add(q.symbol);
+        return true;
+      })
       .filter((q) => (view === "WATCHLIST" ? watchlist.includes(q.symbol) : true))
       .filter((q) => (filter === "ALL" ? true : q.signal === filter))
       .filter((q) => (sector === "ALL" ? true : q.sector === sector))
