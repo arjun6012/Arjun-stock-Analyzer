@@ -149,7 +149,8 @@ function Index() {
           ? q.name.toLowerCase().includes(query.toLowerCase()) ||
             q.symbol.toLowerCase().includes(query.toLowerCase())
           : true,
-      );
+      )
+      .sort((a, b) => b.confidence - a.confidence);
   }, [quotes, filter, sector, query, view, watchlist]);
 
   const counts = useMemo(() => {
