@@ -1681,7 +1681,13 @@ async function mapWithConcurrency<T, R>(
 }
 
 export const getIndianStocks = createServerFn({ method: "GET" }).handler(async () => {
-  const results = await mapWithConcurrency(DEFAULT_TICKERS, 10, (t) =>
+  const seen = new Set<string>();
+  const uniqueTickers = DEFAULT_TICKERS.filter((t) => {
+    if (seen.has(t.symbol)) return false;
+    seen.add(t.symbol);
+    return true;
+  });
+  const results = await mapWithConcurrency(uniqueTickers, 10, (t) =>
     fetchOne(t.symbol, t.name, t.sector),
   );
   const quotes = results.filter((q): q is StockQuote => q !== null);
