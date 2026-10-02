@@ -88,6 +88,12 @@ export interface StockQuote {
   obvTrend: "RISING" | "FALLING" | "FLAT";
   obvSlope: number;
   vwap20: number;
+  roc6m: number;
+  upDays20: number;
+  downDays20: number;
+  volatility20: number;
+  rangePosition20: number;
+  trendAlignment: number;
   roi: ROI;
   history: {
     closes: number[];
