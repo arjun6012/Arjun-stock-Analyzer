@@ -1320,6 +1320,52 @@ function deriveSignal(
     );
   }
 
+  // Sentiment & breadth factors
+  // 6-month rate of change (medium-term momentum)
+  if (ind.roc6m > 15) {
+    score += 1.0;
+    reasons.push(`Strong 6-month momentum (+${ind.roc6m.toFixed(1)}%)`);
+  } else if (ind.roc6m < -15) {
+    score -= 1.0;
+    reasons.push(`Weak 6-month momentum (${ind.roc6m.toFixed(1)}%)`);
+  }
+
+  // Up/down day breadth over last 20 sessions
+  const breadth = ind.upDays20 - ind.downDays20;
+  if (breadth >= 5) {
+    score += 0.75;
+    reasons.push(`Positive breadth (${ind.upDays20} up vs ${ind.downDays20} down days)`);
+  } else if (breadth <= -5) {
+    score -= 0.75;
+    reasons.push(`Negative breadth (${ind.downDays20} down vs ${ind.upDays20} up days)`);
+  }
+
+  // Multi-timeframe trend alignment (0-5)
+  if (ind.trendAlignment >= 4) {
+    score += 1.25;
+    reasons.push("Full trend alignment across SMA20/50/200");
+    confluenceReasons.push("Trend Alignment: price above all key averages, averages stacked bullishly");
+  } else if (ind.trendAlignment <= 1) {
+    score -= 1.25;
+    reasons.push("Trend misalignment — price below key averages");
+    confluenceReasons.push("Trend Alignment: price below key averages, bearish stack");
+  }
+
+  // 20-day range position (breakout vs breakdown location)
+  if (ind.rangePosition20 > 0.9 && ind.volumeRatio > 1.2) {
+    score += 0.75;
+    reasons.push("Breaking out of 20-day range on volume");
+  } else if (ind.rangePosition20 < 0.1 && ind.volumeRatio > 1.2) {
+    score -= 0.75;
+    reasons.push("Breaking down from 20-day range on volume");
+  }
+
+  // Volatility regime: high annualized volatility reduces conviction
+  if (ind.volatility20 > 45) {
+    score *= 0.85;
+    reasons.push(`High volatility regime (${ind.volatility20.toFixed(0)}% ann.) — reduced conviction`);
+  }
+
   let signal: Signal = "HOLD";
   if (score >= 2.5) signal = "BUY";
   else if (score <= -2.5) signal = "SELL";
