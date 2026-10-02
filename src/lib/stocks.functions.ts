@@ -88,6 +88,12 @@ export interface StockQuote {
   obvTrend: "RISING" | "FALLING" | "FLAT";
   obvSlope: number;
   vwap20: number;
+  roc6m: number;
+  upDays20: number;
+  downDays20: number;
+  volatility20: number;
+  rangePosition20: number;
+  trendAlignment: number;
   roi: ROI;
   history: {
     closes: number[];
@@ -1320,6 +1326,52 @@ function deriveSignal(
     );
   }
 
+  // Sentiment & breadth factors
+  // 6-month rate of change (medium-term momentum)
+  if (ind.roc6m > 15) {
+    score += 1.0;
+    reasons.push(`Strong 6-month momentum (+${ind.roc6m.toFixed(1)}%)`);
+  } else if (ind.roc6m < -15) {
+    score -= 1.0;
+    reasons.push(`Weak 6-month momentum (${ind.roc6m.toFixed(1)}%)`);
+  }
+
+  // Up/down day breadth over last 20 sessions
+  const breadth = ind.upDays20 - ind.downDays20;
+  if (breadth >= 5) {
+    score += 0.75;
+    reasons.push(`Positive breadth (${ind.upDays20} up vs ${ind.downDays20} down days)`);
+  } else if (breadth <= -5) {
+    score -= 0.75;
+    reasons.push(`Negative breadth (${ind.downDays20} down vs ${ind.upDays20} up days)`);
+  }
+
+  // Multi-timeframe trend alignment (0-5)
+  if (ind.trendAlignment >= 4) {
+    score += 1.25;
+    reasons.push("Full trend alignment across SMA20/50/200");
+    confluenceReasons.push("Trend Alignment: price above all key averages, averages stacked bullishly");
+  } else if (ind.trendAlignment <= 1) {
+    score -= 1.25;
+    reasons.push("Trend misalignment — price below key averages");
+    confluenceReasons.push("Trend Alignment: price below key averages, bearish stack");
+  }
+
+  // 20-day range position (breakout vs breakdown location)
+  if (ind.rangePosition20 > 0.9 && ind.volumeRatio > 1.2) {
+    score += 0.75;
+    reasons.push("Breaking out of 20-day range on volume");
+  } else if (ind.rangePosition20 < 0.1 && ind.volumeRatio > 1.2) {
+    score -= 0.75;
+    reasons.push("Breaking down from 20-day range on volume");
+  }
+
+  // Volatility regime: high annualized volatility reduces conviction
+  if (ind.volatility20 > 45) {
+    score *= 0.85;
+    reasons.push(`High volatility regime (${ind.volatility20.toFixed(0)}% ann.) — reduced conviction`);
+  }
+
   let signal: Signal = "HOLD";
   if (score >= 2.5) signal = "BUY";
   else if (score <= -2.5) signal = "SELL";
@@ -1637,6 +1689,32 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const pivotR1 = 2 * pivotPP - prevLowVal;
     const pivotR2 = pivotPP + (prevHighVal - prevLowVal);
 
+    // Sentiment / breadth extras
+    const ago126 = closes[closes.length - 127] ?? closes[0];
+    const roc6m = ago126 ? ((price - ago126) / ago126) * 100 : 0;
+    const last21 = closes.slice(-21);
+    let upDays20 = 0;
+    let downDays20 = 0;
+    for (let i = 1; i < last21.length; i++) {
+      if (last21[i] > last21[i - 1]) upDays20++;
+      else if (last21[i] < last21[i - 1]) downDays20++;
+    }
+    const rets: number[] = [];
+    for (let i = 1; i < last21.length; i++) {
+      const prev = last21[i - 1];
+      if (prev) rets.push((last21[i] - prev) / prev);
+    }
+    const volatility20 = rets.length > 1 ? stddev(rets) * Math.sqrt(252) * 100 : 0;
+    const hi20 = last20.length ? Math.max(...last20) : price;
+    const lo20 = last20.length ? Math.min(...last20) : price;
+    const rangePosition20 = hi20 > lo20 ? (price - lo20) / (hi20 - lo20) : 0.5;
+    const trendAlignment =
+      (price > sma20Val ? 1 : 0) +
+      (price > sma50Val ? 1 : 0) +
+      (price > sma200Val ? 1 : 0) +
+      (sma20Val > sma50Val ? 1 : 0) +
+      (sma50Val > sma200Val ? 1 : 0);
+
     const indicators: Indicators = {
       sma20: sma20Val,
       sma50: sma50Val,
@@ -1684,6 +1762,12 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       obvTrend: obvVals.trend,
       obvSlope: obvVals.slope,
       vwap20: vwapVal,
+      roc6m,
+      upDays20,
+      downDays20,
+      volatility20,
+      rangePosition20,
+      trendAlignment,
     };
 
     const { signal, reasons, score, confidence, confluenceReasons, confidenceTier } = deriveSignal(
