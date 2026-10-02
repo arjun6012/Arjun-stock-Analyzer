@@ -635,6 +635,41 @@ function IndicatorPanel({ q }: { q: StockQuote }) {
       status: q.price > q.vwap20 ? "bullish" : "bearish",
       details: "Institutional fair-value reference",
     },
+    {
+      name: "6M Momentum (ROC)",
+      value: `${q.roc6m >= 0 ? "+" : ""}${q.roc6m.toFixed(1)}%`,
+      status: q.roc6m > 15 ? "bullish" : q.roc6m < -15 ? "bearish" : "neutral",
+      details: "Rate of change over ~6 months",
+    },
+    {
+      name: "Breadth (20d)",
+      value: `${q.upDays20}↑ / ${q.downDays20}↓`,
+      status:
+        q.upDays20 - q.downDays20 >= 5
+          ? "bullish"
+          : q.downDays20 - q.upDays20 >= 5
+            ? "bearish"
+            : "neutral",
+      details: "Up vs down sessions in last 20 days",
+    },
+    {
+      name: "Trend Alignment",
+      value: `${q.trendAlignment}/5`,
+      status: q.trendAlignment >= 4 ? "bullish" : q.trendAlignment <= 1 ? "bearish" : "neutral",
+      details: "Price & SMA20/50/200 stack score",
+    },
+    {
+      name: "20d Range Position",
+      value: `${(q.rangePosition20 * 100).toFixed(0)}%`,
+      status: q.rangePosition20 > 0.9 ? "bullish" : q.rangePosition20 < 0.1 ? "bearish" : "neutral",
+      details: "Where price sits in the 20-day range",
+    },
+    {
+      name: "Volatility (20d ann.)",
+      value: `${q.volatility20.toFixed(0)}%`,
+      status: q.volatility20 > 45 ? "bearish" : q.volatility20 < 25 ? "bullish" : "neutral",
+      details: "Annualized daily-return volatility",
+    },
   ];
 
   const fibLevels = [
