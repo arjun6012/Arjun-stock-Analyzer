@@ -1637,6 +1637,32 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
     const pivotR1 = 2 * pivotPP - prevLowVal;
     const pivotR2 = pivotPP + (prevHighVal - prevLowVal);
 
+    // Sentiment / breadth extras
+    const ago126 = closes[closes.length - 127] ?? closes[0];
+    const roc6m = ago126 ? ((price - ago126) / ago126) * 100 : 0;
+    const last21 = closes.slice(-21);
+    let upDays20 = 0;
+    let downDays20 = 0;
+    for (let i = 1; i < last21.length; i++) {
+      if (last21[i] > last21[i - 1]) upDays20++;
+      else if (last21[i] < last21[i - 1]) downDays20++;
+    }
+    const rets: number[] = [];
+    for (let i = 1; i < last21.length; i++) {
+      const prev = last21[i - 1];
+      if (prev) rets.push((last21[i] - prev) / prev);
+    }
+    const volatility20 = rets.length > 1 ? stddev(rets) * Math.sqrt(252) * 100 : 0;
+    const hi20 = last20.length ? Math.max(...last20) : price;
+    const lo20 = last20.length ? Math.min(...last20) : price;
+    const rangePosition20 = hi20 > lo20 ? (price - lo20) / (hi20 - lo20) : 0.5;
+    const trendAlignment =
+      (price > sma20Val ? 1 : 0) +
+      (price > sma50Val ? 1 : 0) +
+      (price > sma200Val ? 1 : 0) +
+      (sma20Val > sma50Val ? 1 : 0) +
+      (sma50Val > sma200Val ? 1 : 0);
+
     const indicators: Indicators = {
       sma20: sma20Val,
       sma50: sma50Val,
