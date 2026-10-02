@@ -1710,6 +1710,12 @@ async function fetchOne(symbol: string, name: string, sector: string): Promise<S
       obvTrend: obvVals.trend,
       obvSlope: obvVals.slope,
       vwap20: vwapVal,
+      roc6m,
+      upDays20,
+      downDays20,
+      volatility20,
+      rangePosition20,
+      trendAlignment,
     };
 
     const { signal, reasons, score, confidence, confluenceReasons, confidenceTier } = deriveSignal(
