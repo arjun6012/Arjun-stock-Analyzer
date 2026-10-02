@@ -1,0 +1,4 @@
+- [ ] Add Screener ID/URL lookup with company fundamentals and clear unavailable-state handling.
+- [ ] Use imported fundamentals as additional confidence factors without weakening existing technical analysis.
+- [ ] Add lookup UI and fundamental insights to the stock dashboard.
+- [ ] Validate typecheck, build diagnostics, and the lookup/filter presentation.
